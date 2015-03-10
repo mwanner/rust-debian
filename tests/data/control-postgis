@@ -1,0 +1,170 @@
+Source: postgis
+Section: misc
+Priority: optional
+Maintainer: Debian GIS Project <pkg-grass-devel@lists.alioth.debian.org>
+Uploaders: Stephen Frost <sfrost@debian.org>, Francesco Paolo
+ Lovergine <frankie@debian.org>, Markus Wanner <markus@bluegap.ch>,
+ Bas Couwenberg <sebastic@xs4all.nl>
+Build-Depends: debhelper (>= 9), po-debconf,
+ dpkg-dev (>= 1.16.1~), autotools-dev, dh-autoreconf, autoconf2.13,
+ flex, bison, rdfind, libgeos-dev (>= 3.3),
+ libjson-c-dev | libjson0-dev (>= 0.9~),
+ libproj-dev (>= 4.6.0), libssl-dev, xsltproc, docbook, docbook-xsl,
+ imagemagick, libcunit1-dev, dblatex, libxml2-dev (>= 2.5.0~),
+ libgtk2.0-dev, libgdal-dev (>= 1.9.0~) | libgdal1-dev (>= 1.9.0~),
+ postgresql-server-dev-all, postgresql-common (>= 148~), postgresql,
+ maven-repo-helper
+Build-Depends-Indep: default-jdk,
+ libpostgresql-jdbc-java, fastjar, libjts-java (>= 1.7), maven2,
+ libmaven-clean-plugin-java, libmaven-jar-plugin-java,
+ libsurefire-java, libmaven-compiler-plugin-java,
+ libmaven-resources-plugin-java,
+ libmaven-javadoc-plugin-java
+Standards-Version: 3.9.6
+Homepage: http://postgis.net/
+Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-grass/postgis.git
+Vcs-Git: git://anonscm.debian.org/pkg-grass/postgis.git
+
+Package: postgis
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: postgresql-9.4-postgis-2.1, postgis-doc
+Description: Geographic objects support for PostgreSQL
+ PostGIS adds support for geographic objects to the PostgreSQL
+ object-relational database. In effect, PostGIS "spatially enables"
+ the PostgreSQL server, allowing it to be used as a backend spatial
+ database for geographic information systems (GIS), much like ESRI's
+ SDE or Oracle's Spatial extension. PostGIS follows the OpenGIS
+ "Simple Features Specification for SQL".
+ .
+ This package contains the PostGIS userland binaries, common files.
+
+Package: postgis-doc
+Section: doc
+Architecture: all
+Depends: ${misc:Depends}
+Suggests: postgis
+Description: Geographic objects support for PostgreSQL -- documentation
+ PostGIS adds support for geographic objects to the PostgreSQL
+ object-relational database. In effect, PostGIS "spatially enables"
+ the PostgreSQL server, allowing it to be used as a backend spatial
+ database for geographic information systems (GIS), much like ESRI's
+ SDE or Oracle's Spatial extension. PostGIS follows the OpenGIS
+ "Simple Features Specification for SQL".
+ .
+ This package contains the PostGIS documentation.
+
+Package: libpostgis-java
+Architecture: all
+Section: java
+Depends: libpostgresql-jdbc-java, ${misc:Depends}
+Suggests: postgresql-9.4-postgis-2.1
+Breaks: libpostgis-jdbc, libpostgisjava, postgresql-postgis-java
+Replaces: libpostgis-jdbc, libpostgisjava, postgresql-postgis-java
+Description: Geographic objects support for PostgreSQL -- JDBC support
+ PostGIS adds support for geographic objects to the PostgreSQL
+ object-relational database. In effect, PostGIS "spatially enables"
+ the PostgreSQL server, allowing it to be used as a backend spatial
+ database for geographic information systems (GIS), much like ESRI's
+ SDE or Oracle's Spatial extension. PostGIS follows the OpenGIS
+ "Simple Features Specification for SQL".
+ .
+ This package contains JDBC support for PostGIS.
+
+Package: libpostgis-java-doc
+Architecture: all
+Section: doc
+Depends: ${misc:Depends}
+Suggests: libpostgis-java
+Description: Geographic objects support for PostgreSQL -- JDBC documentation
+ PostGIS adds support for geographic objects to the PostgreSQL
+ object-relational database. In effect, PostGIS "spatially enables"
+ the PostgreSQL server, allowing it to be used as a backend spatial
+ database for geographic information systems (GIS), much like ESRI's
+ SDE or Oracle's Spatial extension. PostGIS follows the OpenGIS
+ "Simple Features Specification for SQL".
+ .
+ This package contains the documentation for the JDBC support for PostGIS.
+
+Package: liblwgeom-2.1.5
+Architecture: any
+Section: libs
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: PostGIS "Lightweight Geometry" library
+ PostGIS adds support for geographic objects to the PostgreSQL
+ object-relational database. In effect, PostGIS "spatially enables"
+ the PostgreSQL server, allowing it to be used as a backend spatial
+ database for geographic information systems (GIS), much like ESRI's
+ SDE or Oracle's Spatial extension. PostGIS follows the OpenGIS
+ "Simple Features Specification for SQL".
+ .
+ This library is the generic geometry handling section of PostGIS. The
+ geometry objects, constructors, destructors, and a set of spatial
+ processing functions, are implemented here.
+
+Package: liblwgeom-dev
+Architecture: any
+Section: libdevel
+Depends: ${misc:Depends},
+ liblwgeom-2.1.5 (= ${binary:Version})
+Breaks: postgis (<< 2.0.0)
+Description: PostGIS "Lightweight Geometry" library - Development files
+ PostGIS adds support for geographic objects to the PostgreSQL
+ object-relational database. In effect, PostGIS "spatially enables"
+ the PostgreSQL server, allowing it to be used as a backend spatial
+ database for geographic information systems (GIS), much like ESRI's
+ SDE or Oracle's Spatial extension. PostGIS follows the OpenGIS
+ "Simple Features Specification for SQL".
+ .
+ This library is the generic geometry handling section of PostGIS. The
+ geometry objects, constructors, destructors, and a set of spatial
+ processing functions, are implemented here.  This package contains
+ the development files.
+
+Package: postgresql-9.4-postgis-2.1
+Depends: ${shlibs:Depends}, postgresql-9.4,
+ postgresql-9.4-postgis-scripts, liblwgeom-2.1.5,
+ ${misc:Depends}
+Recommends: postgresql-contrib-9.4
+Suggests: postgis
+Breaks: postgis (<< 1.2.1)
+Architecture: any
+Description: Geographic objects support for PostgreSQL 9.4
+ PostGIS adds support for geographic objects to the PostgreSQL
+ object-relational database. In effect, PostGIS "spatially enables"
+ the PostgreSQL server, allowing it to be used as a backend spatial
+ database for geographic information systems (GIS), much like ESRI's
+ SDE or Oracle's Spatial extension. PostGIS follows the OpenGIS
+ "Simple Features Specification for SQL".
+ .
+ This package supports PostgreSQL 9.4.
+
+Package: postgresql-9.4-postgis-scripts
+Architecture: all
+Depends: ${misc:Depends}
+Recommends: postgresql-9.4-postgis-2.1
+Replaces: postgresql-9.4-postgis-2.0-scripts (<< 2.1.0~),
+ postgresql-9.4-postgis-2.1-scripts (<< 2.1.0-4~)
+Breaks: postgresql-9.4-postgis-2.0-scripts (<< 2.1.0~),
+ postgresql-9.4-postgis-2.1-scripts (<< 2.1.0-4~)
+Description: Geographic objects support for PostgreSQL 9.4 -- scripts
+ PostGIS adds support for geographic objects to the PostgreSQL
+ object-relational database. In effect, PostGIS "spatially enables"
+ the PostgreSQL server, allowing it to be used as a backend spatial
+ database for geographic information systems (GIS), much like ESRI's
+ SDE or Oracle's Spatial extension. PostGIS follows the OpenGIS
+ "Simple Features Specification for SQL".
+ .
+ This package contains SQL scripts to upgrade from earlier PostGIS
+ versions for PostgreSQL 9.4 as well as Perl utility scripts.
+
+Package: postgresql-9.4-postgis-2.1-scripts
+Architecture: all
+Depends: ${misc:Depends}
+Description: PostGIS for PostgreSQL 9.4 -- scripts -- dummy package
+ This package contained SQL scripts to upgrade from earlier PostGIS
+ versions for PostgreSQL 9.4 as well as Perl utility scripts.
+ It got renamed to postgresql-9.4-postgis-scripts.
+ .
+ This is a transitional dummy package. It can safely be removed.
+

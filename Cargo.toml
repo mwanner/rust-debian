@@ -1,0 +1,19 @@
+[package]
+name = "debian"
+version = "0.0.1"
+authors = ["Markus Wanner <markus@bluegap.ch>"]
+license = "MIT/Apache-2.0"
+description = """
+Helper library for everything related to Debian packaging, like Debian
+version comparison, changelog or control file parsing.
+"""
+
+[dependencies]
+chrono = "*"
+email = "*"
+log = "*"
+time = "0.1"
+
+[lib]
+name = "debian"
+path = "src/lib.rs"

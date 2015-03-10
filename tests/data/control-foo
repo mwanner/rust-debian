@@ -1,0 +1,15 @@
+Source: foo
+Section: unknown
+Priority: extra
+Maintainer: Mickey Mouse <mouse@disney.com>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.6
+Homepage: http://disney.com/foo
+
+Package: foo
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Disney Foo - pseudo package
+ A fantastic package, version 0.9
+ .
+ Powered by Disney.
