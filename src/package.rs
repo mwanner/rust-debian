@@ -1,13 +1,14 @@
 use std::fmt;
 use std::env;
 
-use std::fs::{File, PathExt};
+use std::fs::File;
 use std::io;
-use std::io::{Write, BufRead, BufReader};
+use std::io::{Write, BufRead};
 use std::path::Path;
 
-use chrono::{FixedOffset, Local, Offset};
+use chrono::{FixedOffset, Local};
 use chrono::datetime::DateTime;
+// FIXME: this might be useful:
 // use email::rfc822::Rfc822DateParser;
 
 use super::Version;
@@ -242,10 +243,10 @@ impl ControlParagraph {
         for entry in self.entries.iter() {
             if entry.key == key {
                 return Some(match entry.value {
-                    ControlValue::Simple(ref v) => v,
-                    ControlValue::Folded(ref v) => v,
-                    ControlValue::MultiLine(ref v) => v
-                }.as_slice());
+                    ControlValue::Simple(ref v) => &v,
+                    ControlValue::Folded(ref v) => &v,
+                    ControlValue::MultiLine(ref v) => &v
+                });
             }
         }
         return None;
@@ -300,7 +301,7 @@ impl ControlFile {
                     // begin new entry
                     if is_end_of_para { None } else { Some(line) }
                 },
-                (Some(v), true, false) => Some(v + line.as_slice()),
+                (Some(v), true, false) => Some(v + &line),
                 (None, _, false) => Some(line),
                 (_, _, true) => None,
             };
@@ -332,10 +333,10 @@ impl ControlFile {
                     ControlValue::Folded(v) => v,
                     ControlValue::MultiLine(v) => v,
                 };
-                let s = entry.key.clone() + ": " + v.as_slice() + "\n";
-                file.write(s.as_bytes());
+                let s = entry.key.clone() + ": " + &v + "\n";
+                try!(file.write(s.as_bytes()));
             }
-            file.write("\n".as_bytes());
+            try!(file.write("\n".as_bytes()));
         }
 
         Ok(())
@@ -404,15 +405,15 @@ impl fmt::Display for Dependency {
 
 fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
     enum ST {
-        PACKAGE_NAME,
-        PRE_VERSION,
-        IN_VERSION_REL,
-        IN_VERSION_DEF,
-        PRE_ARCH,
-        IN_ARCH,
-        DONE
+        PackageName,
+        PreVersion,
+        InVersionRel,
+        InVersionDef,
+        PreArch,
+        InArch,
+        Done
     }
-    let mut st = ST::PACKAGE_NAME;
+    let mut st = ST::PackageName;
     let mut result = SingleDependency {
         package: "".to_string(),
         version: None,
@@ -423,31 +424,31 @@ fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
     let mut arch = "".to_string();
     for ch in s.chars() {
         match st {
-            ST::PACKAGE_NAME => {
-                if ch.is_whitespace() { st = ST::PRE_VERSION; }
-                else if ch == '(' { st = ST::IN_VERSION_REL; }
+            ST::PackageName => {
+                if ch.is_whitespace() { st = ST::PreVersion; }
+                else if ch == '(' { st = ST::InVersionRel; }
                 else { result.package.push(ch); }
             },
-            ST::PRE_VERSION => {
+            ST::PreVersion => {
                 if ch.is_whitespace() { }
-                else if ch == '(' { st = ST::IN_VERSION_REL; }
+                else if ch == '(' { st = ST::InVersionRel; }
                 else { return Err("garbage after package name"); }
             },
-            ST::IN_VERSION_REL => {
+            ST::InVersionRel => {
                 if ch == '>' || ch == '<' || ch == '=' { vrel.push(ch); }
                 else if ch == ')' { return Err("no version given"); }
                 else {
-                    st = ST::IN_VERSION_DEF;
+                    st = ST::InVersionDef;
                     vdef.push(ch);
                 }
             },
-            ST::IN_VERSION_DEF => {
+            ST::InVersionDef => {
                 if ch == ')' {
                     let version = match Version::parse(vdef.trim()) {
                         Ok(v) => v,
-                        Err(e) => return Err("error parsing version")
+                        Err(_) => return Err("error parsing version")
                     };
-                    result.version = match vrel.as_slice() {
+                    result.version = match &vrel[..] {
                         ">=" | ">" => Some((VRel::GreaterOrEqual, version)),
                         ">>" => Some((VRel::Greater, version)),
                         "<=" | "<" => Some((VRel::LesserOrEqual, version)),
@@ -455,24 +456,24 @@ fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
                         "=" => Some((VRel::Equal, version)),
                         _ => return Err("invalid relation")
                     };
-                    st = ST::PRE_ARCH;
+                    st = ST::PreArch;
                 } else { vdef.push(ch); }
             },
-            ST::PRE_ARCH => {
+            ST::PreArch => {
                 if ch.is_whitespace() { }
-                else if ch == '[' { st = ST::IN_ARCH; }
+                else if ch == '[' { st = ST::InArch; }
                 else { return Err("garbage after version"); }
             },
-            ST::IN_ARCH => {
+            ST::InArch => {
                 if ch == ']' {
                     let arch = arch.trim().to_string();
                     if arch.len() > 0 { result.arch = Some(arch); }
                     else { return Err("empty arch given"); }
-                    st = ST::DONE;
+                    st = ST::Done;
                 }
                 else { arch.push(ch); }
             },
-            ST::DONE => {
+            ST::Done => {
                 if ch.is_whitespace() { }
                 else { return Err("garbage after arch"); }
             }
