@@ -398,7 +398,7 @@ impl fmt::Display for Dependency {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let alts = self.alternatives.iter().map(|x| format!("{}", x))
             .collect::<Vec<String>>()
-            .connect(" | ");
+            .join(" | ");
         write!(f, "{}", alts)
     }
 }

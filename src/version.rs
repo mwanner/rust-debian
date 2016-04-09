@@ -1,15 +1,15 @@
 use std::cmp::Ordering;
 use std::fmt;
-use std::num::from_str_radix;
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd)]
-pub struct VersionPart {
+pub struct VersionElement {
     pub alpha: String,
     pub numeric: u64
 }
 
-impl Ord for VersionPart {
-    fn cmp(&self, other: &VersionPart) -> Ordering {
+impl Ord for VersionElement {
+    fn cmp(&self, other: &VersionElement) -> Ordering {
         assert!(self.alpha.len() == 0);
         assert!(other.alpha.len() == 0);
         // FIXME: compare alpha, first!
@@ -17,24 +17,38 @@ impl Ord for VersionPart {
     }
 }
 
-impl fmt::Display for VersionPart {
+impl fmt::Display for VersionElement {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}{}", self.alpha, self.numeric)
     }
 }
 
-impl fmt::Display for Vec<VersionPart> {
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd)]
+pub struct VersionPart {
+    pub elements: Vec<VersionElement>
+}
+
+impl VersionPart {
+    fn count_elements(&self) -> usize {
+        self.elements.len()
+    }
+}
+
+impl fmt::Display for VersionPart {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let parts = self.iter().map(|x| x.to_string()).collect::<Vec<String>>();
-        write!(f, "{}", parts.concat())
+        let s = self.elements.iter()
+                             .map(|x| x.to_string())
+                             .collect::<Vec<String>>()
+                             .concat();
+        write!(f, "{}", s)
     }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd)]
 pub struct Version {
-    pub epoch: i32,
-    pub upstream_version: Vec<VersionPart>,
-    pub debian_revision: Vec<VersionPart>
+    pub epoch: u32,
+    pub upstream_version: VersionPart,
+    pub debian_revision: VersionPart
 }
 
 #[derive(Debug)]
@@ -44,13 +58,13 @@ pub struct ParseError {
 }
 
 impl Version {
-    pub fn parse_parts(s: &str) -> Result<Vec<VersionPart>, ParseError> {
+    pub fn parse_part(s: &str) -> Result<VersionPart, ParseError> {
         if s.len() == 0 {
-            return Ok(vec![]);
+            return Ok(VersionPart { elements: vec![] });
         }
-        let mut result : Vec<VersionPart> = vec![];
+        let mut elements : Vec<VersionElement> = vec![];
         let mut in_numeric_part = false;
-        let mut cur = VersionPart { alpha: "".to_string(), numeric: 0 };
+        let mut cur = VersionElement { alpha: "".to_string(), numeric: 0 };
         for c in s.chars() {
             match (in_numeric_part, c.is_digit(10)) {
                 (false, false) => cur.alpha.push(c),
@@ -60,15 +74,15 @@ impl Version {
                     cur.numeric += (c as u64) - ('0' as u64);
                 }
                 (true, false) => {
-                    result.push(cur);
+                    elements.push(cur);
                     in_numeric_part = false;
-                    cur = VersionPart { alpha: "".to_string(), numeric: 0 };
+                    cur = VersionElement { alpha: "".to_string(), numeric: 0 };
                     cur.alpha.push(c);
                 }
             }
         }
-        result.push(cur);
-        Ok(result)
+        elements.push(cur);
+        Ok(VersionPart { elements: elements })
     }
 
     pub fn parse(s: &str) -> Result<Version, ParseError> {
@@ -78,7 +92,7 @@ impl Version {
         let epoch = match first_colon {
             Some(l) => {
                 let epoch_str = &s[..l];
-                match from_str_radix(epoch_str, 10) {
+                match u32::from_str(epoch_str) {
                     Ok(v) => Some((l, v)),
                     Err(_) => return Err(ParseError { pos: 0,
                         msg: "Expected a numeric epoch.".to_string() })
@@ -90,23 +104,23 @@ impl Version {
         Ok(match (epoch, last_dash) {
             (Some((l, epoch)), Some(r)) => Version {
                 epoch: epoch,
-                upstream_version: try!(Version::parse_parts(&s[l+1..r])),
-                debian_revision: try!(Version::parse_parts(&s[r+1..]))
+                upstream_version: try!(Version::parse_part(&s[l+1..r])),
+                debian_revision: try!(Version::parse_part(&s[r+1..]))
             },
             (Some((l, epoch)), None) => Version {
                 epoch: epoch,
-                upstream_version: try!(Version::parse_parts(&s[l+1..])),
-                debian_revision: vec![],
+                upstream_version: try!(Version::parse_part(&s[l+1..])),
+                debian_revision: VersionPart { elements: vec![] },
             },
             (None, Some(r)) => Version {
                 epoch: 0,
-                upstream_version: try!(Version::parse_parts(&s[..r])),
-                debian_revision: try!(Version::parse_parts(&s[r+1..]))
+                upstream_version: try!(Version::parse_part(&s[..r])),
+                debian_revision: try!(Version::parse_part(&s[r+1..]))
             },
             (None, None) => Version {
                 epoch: 0,
-                upstream_version: try!(Version::parse_parts(&s[..])),
-                debian_revision: vec![]
+                upstream_version: try!(Version::parse_part(&s[..])),
+                debian_revision: VersionPart { elements: vec![] }
             }
         })
     }
@@ -124,11 +138,19 @@ impl Ord for Version {
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match (self.epoch, self.debian_revision.len()) {
-            (0, 0) => write!(f, "{}", self.upstream_version),
-            (0, _) => write!(f, "{}-{}", self.upstream_version, self.debian_revision),
-            (_, 0) => write!(f, "{}:{}", self.epoch, self.upstream_version),
-            (_, _) => write!(f, "{}:{}-{}", self.epoch, self.upstream_version, self.debian_revision)
+        match (self.epoch, self.debian_revision.count_elements()) {
+            (0, 0) => write!(f, "{}",
+                             &self.upstream_version),
+            (0, _) => write!(f, "{}-{}",
+                             &self.upstream_version,
+                             &self.debian_revision),
+            (_, 0) => write!(f, "{}:{}",
+                             self.epoch,
+                             &self.upstream_version),
+            (_, _) => write!(f, "{}:{}-{}",
+                             self.epoch,
+                             &self.upstream_version,
+                             &self.debian_revision)
         }
     }
 }
