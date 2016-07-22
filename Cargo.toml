@@ -1,11 +1,12 @@
 [package]
 name = "debian"
-version = "0.0.2"
+version = "0.1.0"
 authors = ["Markus Wanner <markus@bluegap.ch>"]
 license = "MIT/Apache-2.0"
 description = """
-Helper library for everything related to Debian packaging, like Debian
-version comparison, changelog or control file parsing.
+Helper library for everything related to Debian, like parsing changelog or
+control files for packaging, comparing versions (the Debian way) or
+interacting with apt.
 """
 
 [dependencies]
