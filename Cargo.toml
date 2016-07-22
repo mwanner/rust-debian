@@ -11,10 +11,10 @@ interacting with apt.
 repository = "https://github.com/mwanner/rust-debian"
 
 [dependencies]
-chrono = "*"
-log = "*"
+chrono = ">=0.2.21"
+log = "0.3"
 time = "0.1"
-tempdir = "*"
+tempdir = "0.3"
 
 [lib]
 name = "debian"
