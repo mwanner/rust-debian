@@ -8,6 +8,7 @@ Helper library for everything related to Debian, like parsing changelog or
 control files for packaging, comparing versions (the Debian way) or
 interacting with apt.
 """
+repository = "https://github.com/mwanner/rust-debian"
 
 [dependencies]
 chrono = "*"
