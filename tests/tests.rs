@@ -68,22 +68,20 @@ fn version_basics() {
     assert_eq!(&v.upstream_version.to_string(), "2.1.4");
     assert_eq!(&v.debian_revision.to_string(), "0~bpo2");
 
-/*
     let v = Version::parse("7:2.1.4").unwrap();
     assert_eq!(v.epoch, 7);
-    assert_eq!(vp_to_str(&v.upstream_version), "2.1.4");
-    assert_eq!(vp_to_str(&v.debian_revision), "");
+    assert_eq!(v.upstream_version.to_string(), "2.1.4");
+    assert_eq!(v.debian_revision.to_string(), "");
 
     let v = Version::parse("2.1.4").unwrap();
     assert_eq!(v.epoch, 0);
-    assert_eq!(vp_to_str(&v.upstream_version), "2.1.4");
-    assert_eq!(vp_to_str(&v.debian_revision), "");
+    assert_eq!(v.upstream_version.to_string(), "2.1.4");
+    assert_eq!(v.debian_revision.to_string(), "");
 
     let v = Version::parse("1:1:1-8-8").unwrap();
     assert_eq!(v.epoch, 1);
-    assert_eq!(vp_to_str(&v.upstream_version), "1:1-8");
-    assert_eq!(vp_to_str(&v.debian_revision), "8");
-    */
+    assert_eq!(v.upstream_version.to_string(), "1:1-8");
+    assert_eq!(v.debian_revision.to_string(), "8");
 }
 
 #[test]

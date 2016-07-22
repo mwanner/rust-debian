@@ -10,7 +10,6 @@ version comparison, changelog or control file parsing.
 
 [dependencies]
 chrono = "*"
-#email = "*"
 log = "*"
 time = "0.1"
 tempdir = "*"

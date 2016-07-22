@@ -6,24 +6,33 @@ use std::io;
 use std::io::{Write, BufRead};
 use std::path::Path;
 
-use chrono::{FixedOffset, Local};
+use chrono::Local;
 use chrono::datetime::DateTime;
-// FIXME: this might be useful:
-// use email::rfc822::Rfc822DateParser;
 
 use super::Version;
 
+/// represents a single entry in a debian/changelog file
 pub struct ChangelogEntry {
+    /// source package name
     pkg: String,
+    /// debian revision
     version: String,
-    dist: String,
+    /// distribution(s) where this version should be installed when it
+    /// is uploaded
+    distributions: Vec<String>,
+    // urgency of the upload
     urgency: String,
+    // changelog description
     detail: String,
+    // name of the uploader of the package
     maintainer_name: String,
+    // email of the uploader of the package
 	maintainer_email: String,
-    ts: DateTime<FixedOffset>
+    // date of the upload
+    ts: DateTime<Local>
 }
 
+/// simply a collection of `ChangeLogEntry`
 pub struct Changelog {
     entries: Vec<ChangelogEntry>
 }
@@ -34,23 +43,25 @@ impl ChangelogEntry {
         ChangelogEntry {
             pkg: pkg,
             version: version,
-            dist: "UNRELEASED".to_string(),
+            distributions: vec!["UNRELEASED".to_string()],
             urgency: "medium".to_string(),
             detail: detail,
             maintainer_name: get_default_maintainer_name(),
 			maintainer_email: get_default_maintainer_email(),
-            ts: get_default_ts()
+            ts: Local::now()
         }
     }
 
     fn serialize(&self) -> String {
-        let ts_str = self.ts.format("%a, %d %b %Y %H:%M:%S %z");
         format!("{} ({}) {}; urgency={}\n\n{}\n -- {} <{}>  {}\n\n",
-                self.pkg, self.version, self.dist, self.urgency,
+                self.pkg,
+                self.version,
+                self.distributions.join(" "),
+                self.urgency,
                 self.detail,
                 self.maintainer_name,
 				self.maintainer_email,
-				ts_str
+				self.ts.to_rfc2822()
                 ).to_string()
     }
 }
@@ -75,8 +86,26 @@ impl Changelog {
         }
         Ok(())
     }
+
+    pub fn from_file(in_file: &Path) -> io::Result<Changelog> {
+		let file = try!(File::open(in_file));
+        let mut buf = io::BufReader::new(file);
+        let entries = vec![];
+        loop {
+			let mut line = String::new();
+			try!(buf.read_line(&mut line));
+			let is_eof = line.len() == 0;
+
+            // Loop termination condition
+            if is_eof { break; }
+        }
+
+        Ok(Changelog { entries: entries })
+    }
 }
 
+/// A helper routine to determine the default Debian maintainer name
+/// from the environment.
 pub fn get_default_maintainer_name() -> String {
     match env::var("DEBFULLNAME") {
         Ok(name) => name,
@@ -87,6 +116,8 @@ pub fn get_default_maintainer_name() -> String {
     }
 }
 
+/// A helper routine to determine the default Debian email address
+/// from the environment.
 pub fn get_default_maintainer_email() -> String {
     match env::var("DEBEMAIL") {
         Ok(email) => email,
@@ -97,36 +128,6 @@ pub fn get_default_maintainer_email() -> String {
     }
 }
 
-fn get_default_ts() -> DateTime<FixedOffset> {
-    let now = Local::now();
-	return now.with_timezone(&now.offset());
-}
-
-/*
-fn parse_changelog() -> Changelog {
-    let mut result = Changelog { entries: vec![] };
-
-    let now = Local::now();
-    let offset = FixedOffset::east(now.offset().local_minus_utc().
-                                   num_seconds() as i32);
-
-    let e = ChangelogEntry {
-        pkg: "aoeu".to_string(),
-        version: "1.0-1".to_string(),
-        dist: "UNRELEASED".to_string(),
-        urgency: "medium".to_string(),
-        detail: "".to_string(),
-        maintainer_name: get_default_maintainer_name(),
-        maintainer_email: get_default_maintainer_email(),
-        ts: now.with_offset::<FixedOffset>(offset)
-    };
-
-    result.entries.push(e);
-    
-    return result;
-}
-*/
-
 #[derive(Debug, Clone)]
 pub enum ControlValue {
     Simple(String),
@@ -134,12 +135,14 @@ pub enum ControlValue {
     MultiLine(String)
 }
 
+/// A single field or entry in a control file
 #[derive(Debug, Clone)]
 pub struct ControlEntry {
     key: String,
     value: ControlValue
 }
 
+/// A paragraph consisting of multiple entries of type `ControlEntry`.
 #[derive(Debug, Clone)]
 pub struct ControlParagraph {
     entries: Vec<ControlEntry>
@@ -150,9 +153,11 @@ pub struct ControlFile {
     paragraphs: Vec<ControlParagraph>
 }
 
-impl ControlEntry {
-    pub fn new(key: &str, val: String) -> ControlEntry {
-        let cval = match key {
+impl ControlValue {
+    /// Creates a `ControlValue` from a `String` choosing its type
+    /// from the key.
+    pub fn new(key: &str, val: String) -> ControlValue {
+        match key {
             // Fields appearing in both types of source paragraphs
             "Maintainer" => ControlValue::Simple(val),
             "Section" => ControlValue::Simple(val),
@@ -195,8 +200,16 @@ impl ControlEntry {
                 debug!("Unknown key: {}", key);
                 ControlValue::Simple(val)
             }
-        };
-        ControlEntry { key: key.to_string(), value: cval }
+        }
+    }
+}
+
+impl ControlEntry {
+    pub fn new(key: &str, val: String) -> ControlEntry {
+        ControlEntry {
+            key: key.to_string(),
+            value: ControlValue::new(key, val)
+        }
     }
 }
 
@@ -207,29 +220,28 @@ impl ControlParagraph {
         }
     }
 
+    /// Append an entry at the end of the paragraph.
     pub fn add_entry(&mut self, key: &str, val: String) {
         let e = ControlEntry::new(key, val);
         self.entries.push(e);
     }
 
+    /// Update or append an entry in the paragraph, returning true if
+    /// the entry was found and replaced, false if appended.
     pub fn update_entry(&mut self, key: &str, val: String) -> bool {
         for entry in self.entries.iter_mut() {
             if entry.key == key {
-                // FIXME: ControlValue adaption shouldn't need an
-                // instantiation of an entire ControlEntry. Maybe the
-                // difference between folded, simple and multi-line is
-                // unneeded, anyways?
-                let e = ControlEntry::new(key, val);
-                entry.value = e.value;
+                entry.value = ControlValue::new(key, val);
                 return true;
             }
         }
 
-        // Append entry
+        // append entry
         self.add_entry(key, val);
         return false;
     }
 
+    /// Check if an entry exists in the paragraph
     pub fn has_entry(&self, key: &str) -> bool {
         for entry in self.entries.iter() {
             if entry.key == key {
@@ -239,6 +251,7 @@ impl ControlParagraph {
         return false;
     }
 
+    /// Get the value of an entry in the paragraph
     pub fn get_entry(&self, key: &str) -> Option<&str> {
         for entry in self.entries.iter() {
             if entry.key == key {
@@ -347,6 +360,7 @@ impl ControlFile {
     }
 }
 
+/// Version relations
 #[derive(Debug, PartialEq, Clone)]
 pub enum VRel {
     GreaterOrEqual,
@@ -368,6 +382,7 @@ impl fmt::Display for VRel {
     }
 }
 
+/// A dependency on another package
 #[derive(Debug, PartialEq, Clone)]
 pub struct SingleDependency {
     pub package: String,
@@ -389,6 +404,7 @@ impl fmt::Display for SingleDependency {
     }
 }
 
+/// Multiple variants that may statisfy a dependency
 #[derive(Debug, PartialEq, Clone)]
 pub struct Dependency {
     pub alternatives: Vec<SingleDependency>
@@ -403,6 +419,8 @@ impl fmt::Display for Dependency {
     }
 }
 
+
+/// Parse a single dependency
 fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
     enum ST {
         PackageName,
@@ -482,6 +500,8 @@ fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
     return Ok(result);
 }
 
+/// Parse a dependency list, comma separated, with pipes separating
+/// variants
 pub fn parse_dep_list(s: &str) -> Result<Vec<Dependency>, &'static str> {
     let mut result = vec![];
     for s in s.split(',').map(|x| x.trim()) {
