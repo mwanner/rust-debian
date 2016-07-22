@@ -1,6 +1,6 @@
 # rust-debian
 
-[![Build status](https://api.travis-ci.org/docopt/docopt.rs.svg)](https://travis-ci.org/docopt/docopt.rs)
+[![Build status](https://api.travis-ci.org/mwanner/rust-debian.svg)](https://travis-ci.org/mwanner/rust-debian)
 
-Rust crate for everything related to Debian packaging, like Debian version comparison, changelog or control file parsing.
-
+Rust crate for everything related to Debian packaging, like Debian
+version comparison, changelog or control file parsing.
