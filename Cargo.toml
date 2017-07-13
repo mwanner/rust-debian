@@ -1,6 +1,6 @@
 [package]
 name = "debian"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Markus Wanner <markus@bluegap.ch>"]
 license = "MIT/Apache-2.0"
 description = """
@@ -11,7 +11,7 @@ interacting with apt.
 repository = "https://github.com/mwanner/rust-debian"
 
 [dependencies]
-chrono = ">=0.2.21"
+chrono = "0.3.*"
 log = "0.3"
 time = "0.1"
 tempdir = "0.3"
