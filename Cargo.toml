@@ -11,7 +11,7 @@ interacting with apt.
 repository = "https://github.com/mwanner/rust-debian"
 
 [dependencies]
-chrono = "0.3.*"
+chrono = "0.4.*"
 log = "0.3"
 time = "0.1"
 tempdir = "0.3"

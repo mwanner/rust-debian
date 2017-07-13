@@ -6,8 +6,7 @@ use std::io;
 use std::io::{Write, BufRead};
 use std::path::Path;
 
-use chrono::Local;
-use chrono::datetime::DateTime;
+use chrono::prelude::*;
 
 use super::Version;
 
@@ -274,7 +273,7 @@ impl ControlFile {
     pub fn add_paragraph(&mut self, p: ControlParagraph) {
         self.paragraphs.push(p);
     }
-    
+
     pub fn from_file(in_file: &Path) -> io::Result<ControlFile> {
 		let file = try!(File::open(in_file));
         let mut buf = io::BufReader::new(file);
@@ -329,7 +328,7 @@ impl ControlFile {
             // Loop termination condition
             if is_eof { break; }
         }
-        
+
         Ok(ControlFile { paragraphs: paragraphs })
     }
 
@@ -516,4 +515,3 @@ pub fn parse_dep_list(s: &str) -> Result<Vec<Dependency>, &'static str> {
     }
     return Ok(result);
 }
-
