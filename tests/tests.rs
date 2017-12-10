@@ -12,9 +12,9 @@ use debian::version::{Version, VersionPart, VersionElement};
 
 fn data_path() -> PathBuf {
 	// Not sure what the best way is - this works when invoked from cargo.
-	let path = match env::var("CARGO_MANIFEST_DIR") {
-		Ok(path_str) => PathBuf::from(path_str),
-		Err(_) => panic!()
+	let path = match env::var_os("CARGO_MANIFEST_DIR") {
+		Some(path_str) => PathBuf::from(path_str),
+		None => panic!()
 	};
 	println!("Path: {}", path.display());
 	// ..while this obviously didn't work:
@@ -24,7 +24,7 @@ fn data_path() -> PathBuf {
 
 fn setup() {
     let root = TempDir::new("control-file-cycle");
-    let root = root.ok().expect("Should have created a temp directory.");
+    let root = root.expect("Should have created a temp directory.");
     assert!(env::set_current_dir(root.path()).is_ok());
     debug!("path setup; root={}, data={}",
            root.path().display(), data_path().display());

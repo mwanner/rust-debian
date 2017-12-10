@@ -10,8 +10,8 @@ pub struct VersionElement {
 
 impl Ord for VersionElement {
     fn cmp(&self, other: &VersionElement) -> Ordering {
-        assert!(self.alpha.len() == 0);
-        assert!(other.alpha.len() == 0);
+        assert!(self.alpha.is_empty());
+        assert!(other.alpha.is_empty());
         // FIXME: compare alpha, first!
         self.numeric.cmp(&other.numeric)
     }
@@ -59,7 +59,7 @@ pub struct ParseError {
 
 impl Version {
     pub fn parse_part(s: &str) -> Result<VersionPart, ParseError> {
-        if s.len() == 0 {
+        if s.is_empty() {
             return Ok(VersionPart { elements: vec![] });
         }
         let mut elements : Vec<VersionElement> = vec![];

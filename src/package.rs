@@ -77,7 +77,7 @@ impl Changelog {
             Ok(f) => f,
             Err(f) => return Err(f)
         };
-        for entry in self.entries.iter() {
+        for entry in &self.entries {
             match file.write(entry.serialize().as_bytes()) {
                 Ok(_) => {},
                 Err(f) => return Err(f)
@@ -93,7 +93,7 @@ impl Changelog {
         loop {
 			let mut line = String::new();
 			try!(buf.read_line(&mut line));
-			let is_eof = line.len() == 0;
+			let is_eof = line.is_empty();
 
             // Loop termination condition
             if is_eof { break; }
@@ -157,44 +157,17 @@ impl ControlValue {
     /// from the key.
     pub fn new(key: &str, val: String) -> ControlValue {
         match key {
-            // Fields appearing in both types of source paragraphs
-            "Maintainer" => ControlValue::Simple(val),
-            "Section" => ControlValue::Simple(val),
-            "Priority" => ControlValue::Simple(val),
-
-            "Pre-Depends" => ControlValue::Folded(val),
-            "Depends" => ControlValue::Folded(val),
-            "Build-Depends" => ControlValue::Folded(val),
-            "Build-Depends-Indep" => ControlValue::Folded(val),
-
-            "Homepage" => ControlValue::Simple(val),
-
-            // Fields appearing in the general paragraph, only
-            "Source" => ControlValue::Simple(val),
-            "Uploaders" => ControlValue::Folded(val),
-            "Standards-Version" => ControlValue::Simple(val),
-            "Vcs-Browser" => ControlValue::Simple(val),
-            "Vcs-Git" => ControlValue::Simple(val),
-            "Recommends" => ControlValue::Folded(val),
-            "Suggests" => ControlValue::Folded(val),
-            "Breaks" => ControlValue::Folded(val),
-            "Replaces" => ControlValue::Folded(val),
-
-            // Fields appearing in binary paragraph, only
-            "Package" => ControlValue::Simple(val),
-            "Changed-By" => ControlValue::Simple(val),
-            "Architecture" => ControlValue::Simple(val),
-            "Essential" => ControlValue::Simple(val),
-            "Description" => ControlValue::MultiLine(val),
-            "Built-Using" => ControlValue::Simple(val),
-            "Binaries" => ControlValue::Folded(val),
-            "Package-Type" => ControlValue::Simple(val),
-            "Dgit" => ControlValue::Folded(val),
-
-            // Fields appearing in binary packages' control files
-            "Version" => ControlValue::Simple(val),
-            "Installed-Size" => ControlValue::Simple(val),
-
+            "Maintainer" | "Section" | "Priority" | "Homepage" | "Source"
+                | "Standards-Version" | "Vcs-Browser" | "Vcs-Git" | "Package"
+                | "Changed-By" | "Architecture" | "Essential" | "Built-Using"
+                | "Package-Type" | "Version" | "Installed-Size"
+                => ControlValue::Simple(val),
+            "Pre-Depends" | "Depends" | "Build-Depends" | "Build-Depends-Indep"
+                | "Uploaders" | "Recommends" | "Suggests" | "Breaks" | "Replaces"
+                | "Binaries" | "Dgit"
+                => ControlValue::Folded(val),
+            "Description"
+                => ControlValue::MultiLine(val),
             _ => {
                 debug!("Unknown key: {}", key);
                 ControlValue::Simple(val)
@@ -228,7 +201,7 @@ impl ControlParagraph {
     /// Update or append an entry in the paragraph, returning true if
     /// the entry was found and replaced, false if appended.
     pub fn update_entry(&mut self, key: &str, val: String) -> bool {
-        for entry in self.entries.iter_mut() {
+        for entry in &mut self.entries {
             if entry.key == key {
                 entry.value = ControlValue::new(key, val);
                 return true;
@@ -237,31 +210,38 @@ impl ControlParagraph {
 
         // append entry
         self.add_entry(key, val);
-        return false;
+        false
     }
 
     /// Check if an entry exists in the paragraph
     pub fn has_entry(&self, key: &str) -> bool {
-        for entry in self.entries.iter() {
+        for entry in &self.entries {
             if entry.key == key {
                 return true;
             }
         }
-        return false;
+        false
     }
 
     /// Get the value of an entry in the paragraph
     pub fn get_entry(&self, key: &str) -> Option<&str> {
-        for entry in self.entries.iter() {
+        for entry in &self.entries {
             if entry.key == key {
                 return Some(match entry.value {
-                    ControlValue::Simple(ref v) => &v,
-                    ControlValue::Folded(ref v) => &v,
-                    ControlValue::MultiLine(ref v) => &v
+                    ControlValue::Simple(ref v)
+                    | ControlValue::Folded(ref v)
+                    | ControlValue::MultiLine(ref v)
+                    => v
                 });
             }
         }
-        return None;
+        None
+    }
+}
+
+impl Default for ControlParagraph {
+    fn default() -> Self {
+        ControlParagraph { entries: vec!() }
     }
 }
 
@@ -284,12 +264,12 @@ impl ControlFile {
 			let mut line = "".to_string();
 
 			try!(buf.read_line(&mut line));
-			let is_eof = line.len() == 0;
+			let is_eof = line.is_empty();
 
 			let (is_end_of_para, is_indented) = {
 				let trimmed_line = line.trim();
-				(trimmed_line.len() == 0,
-				 line.starts_with(" ") && line.len() > 1)
+				(trimmed_line.is_empty(),
+				 line.starts_with(' ') && line.len() > 1)
 			};
 
             // Possibly terminate the current entry and append to the
@@ -320,7 +300,7 @@ impl ControlFile {
 
             // Possibly terminate the current paragraph and append it
             // to the main structure.
-            if is_end_of_para && cur_para.entries.len() > 0 {
+            if is_end_of_para && !cur_para.entries.is_empty() {
                 paragraphs.push(cur_para);
                 cur_para = ControlParagraph::new();
             }
@@ -338,17 +318,18 @@ impl ControlFile {
             Err(e) => return Err(e)
         };
 
-        for para in self.paragraphs.iter() {
-            for entry in para.entries.iter() {
+        for para in &self.paragraphs {
+            for entry in &para.entries {
                 let v = match entry.value.clone() {
-                    ControlValue::Simple(v) => v,
-                    ControlValue::Folded(v) => v,
-                    ControlValue::MultiLine(v) => v,
+                    ControlValue::Simple(v)
+                    | ControlValue::Folded(v)
+                    | ControlValue::MultiLine(v)
+                    => v,
                 };
                 let s = entry.key.clone() + ": " + &v + "\n";
-                try!(file.write(s.as_bytes()));
+                try!(file.write_all(s.as_bytes()));
             }
-            try!(file.write("\n".as_bytes()));
+            try!(file.write_all(b"\n"));
         }
 
         Ok(())
@@ -356,6 +337,12 @@ impl ControlFile {
 
     pub fn get_paragraphs(&self) -> &Vec<ControlParagraph> {
         &self.paragraphs
+    }
+}
+
+impl Default for ControlFile {
+    fn default() -> Self {
+        ControlFile { paragraphs: vec![] }
     }
 }
 
@@ -371,12 +358,12 @@ pub enum VRel {
 
 impl fmt::Display for VRel {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &VRel::GreaterOrEqual => write!(f, ">="),
-            &VRel::Greater => write!(f, ">>"),
-            &VRel::LesserOrEqual => write!(f, "<="),
-            &VRel::Lesser => write!(f, "<<"),
-            &VRel::Equal => write!(f, "=")
+        match *self {
+            VRel::GreaterOrEqual => write!(f, ">="),
+            VRel::Greater => write!(f, ">>"),
+            VRel::LesserOrEqual => write!(f, "<="),
+            VRel::Lesser => write!(f, "<<"),
+            VRel::Equal => write!(f, "=")
         }
     }
 }
@@ -484,7 +471,7 @@ fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
             ST::InArch => {
                 if ch == ']' {
                     let arch = arch.trim().to_string();
-                    if arch.len() > 0 { result.arch = Some(arch); }
+                    if !arch.is_empty() { result.arch = Some(arch); }
                     else { return Err("empty arch given"); }
                     st = ST::Done;
                 }
@@ -496,7 +483,7 @@ fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
             }
         }
     }
-    return Ok(result);
+    Ok(result)
 }
 
 /// Parse a dependency list, comma separated, with pipes separating
@@ -513,5 +500,5 @@ pub fn parse_dep_list(s: &str) -> Result<Vec<Dependency>, &'static str> {
         }
         result.push(Dependency { alternatives: a });
     }
-    return Ok(result);
+    Ok(result)
 }
