@@ -1,5 +1,5 @@
-use std::fmt;
 use std::env;
+use std::fmt;
 
 use std::fs::File;
 use std::io;
@@ -294,7 +294,10 @@ impl ControlFile {
                         }
                         None => {
                             // FIXME: handle this parser error!
-                            debug!("Parser error in line before: '{}', with value '{}'", line, v);
+                            debug!(
+                                "Parser error in line before: '{}', with value '{}'",
+                                line, v
+                            );
                         }
                     };
 
@@ -414,7 +417,8 @@ pub struct Dependency {
 
 impl fmt::Display for Dependency {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let alts = self.alternatives
+        let alts = self
+            .alternatives
             .iter()
             .map(|x| format!("{}", x))
             .collect::<Vec<String>>()
