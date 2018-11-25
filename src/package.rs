@@ -1,3 +1,8 @@
+//! Tools related to Debian packaging
+//!
+//! This module contains a `Changelog` and a `ControlFile` parser for the
+//! Debian changelog and control files usually used for packaging.
+
 use std::env;
 use std::fmt;
 
@@ -10,7 +15,8 @@ use chrono::prelude::*;
 
 use super::Version;
 
-/// represents a single entry in a debian/changelog file
+/// Represents a single entry in a debian/changelog file.
+#[derive(Debug)]
 pub struct ChangelogEntry {
     /// source package name
     pkg: String,
@@ -31,19 +37,33 @@ pub struct ChangelogEntry {
     ts: DateTime<Local>,
 }
 
-/// simply a collection of `ChangeLogEntry`
+/// Represents a complete debian/changelog file
+///
+/// Implemented simply as a collection of `ChangelogEntry`, completely
+/// stored in memory.
+///
+/// # Examples
+///
+/// ```
+/// use debian::package::Changelog;
+/// use std::path::Path;
+///
+/// let changelog = Changelog::from_file(Path::new("debian/changelog"));
+/// ```
+#[derive(Debug)]
 pub struct Changelog {
     entries: Vec<ChangelogEntry>,
 }
 
 impl ChangelogEntry {
+    /// Create a new ChangelogEntry
     pub fn new(pkg: String, version: String, detail: String) -> ChangelogEntry {
         ChangelogEntry {
-            pkg: pkg,
-            version: version,
+            pkg,
+            version,
             distributions: vec!["UNRELEASED".to_string()],
             urgency: "medium".to_string(),
-            detail: detail,
+            detail,
             maintainer_name: get_default_maintainer_name(),
             maintainer_email: get_default_maintainer_email(),
             ts: Local::now(),
@@ -66,12 +86,25 @@ impl ChangelogEntry {
 }
 
 impl Changelog {
+    #[doc(hidden)]
+    #[deprecated(
+        since = "0.2.0",
+        note = "use `from_file` or `default` instead"
+    )]
+    /// Creates a new Changelog starting from a single entry.
     pub fn new(single_entry: ChangelogEntry) -> Changelog {
         Changelog {
             entries: vec![single_entry],
         }
     }
 
+    /// Serializes this `Changelog` to a file on disk.
+    ///
+    /// Creates the file, if it doesn't already exist, overrides it otherwise.
+    ///
+    /// # Errors
+    ///
+    /// This function uses `File::create` and forwards any possible error.
     pub fn to_file(&self, out_file_path: &Path) -> io::Result<()> {
         let mut file = match File::create(out_file_path) {
             Ok(f) => f,
@@ -86,6 +119,9 @@ impl Changelog {
         Ok(())
     }
 
+    /// Deserialize a debian/changelog file from disk.
+    ///
+    /// Reads a Debian changelog file into memory.
     pub fn from_file(in_file: &Path) -> io::Result<Changelog> {
         let file = try!(File::open(in_file));
         let mut buf = io::BufReader::new(file);
@@ -101,7 +137,15 @@ impl Changelog {
             }
         }
 
-        Ok(Changelog { entries: entries })
+        Ok(Changelog { entries })
+    }
+}
+
+impl Default for Changelog {
+    fn default() -> Self {
+        Changelog {
+            entries: Vec::new(),
+        }
     }
 }
 
@@ -129,10 +173,14 @@ pub fn get_default_maintainer_email() -> String {
     }
 }
 
+/// A value in a field of a control file
 #[derive(Debug, Clone)]
 pub enum ControlValue {
+    /// A simple string value
     Simple(String),
+    /// A folder string value
     Folded(String),
+    /// A multiline string value
     MultiLine(String),
 }
 
@@ -149,6 +197,7 @@ pub struct ControlParagraph {
     entries: Vec<ControlEntry>,
 }
 
+/// A control file consisting of multiple paragraphs.
 #[derive(Debug)]
 pub struct ControlFile {
     paragraphs: Vec<ControlParagraph>,
@@ -159,23 +208,23 @@ impl ControlValue {
     /// from the key.
     pub fn new(key: &str, val: String) -> ControlValue {
         match key {
-            "Maintainer" | "Section" | "Priority" | "Homepage" | "Source"
-            | "Standards-Version" | "Vcs-Browser" | "Vcs-Git" | "Package"
-            | "Changed-By" | "Architecture" | "Essential" | "Built-Using"
-            | "Package-Type" | "Version" | "Installed-Size" => {
+            "Architecture" | "Built-Using" | "Changed-By" | "Essential"
+            | "Homepage" | "Installed-Size" | "Maintainer" | "Package"
+            | "Package-Type" | "Priority" | "Section" | "Source"
+            | "Standards-Version" | "Vcs-Browser" | "Vcs-Git" | "Version" => {
                 ControlValue::Simple(val)
             }
-            "Pre-Depends"
-            | "Depends"
+            "Binaries"
+            | "Breaks"
             | "Build-Depends"
             | "Build-Depends-Indep"
-            | "Uploaders"
+            | "Depends"
+            | "Dgit"
+            | "Pre-Depends"
             | "Recommends"
-            | "Suggests"
-            | "Breaks"
             | "Replaces"
-            | "Binaries"
-            | "Dgit" => ControlValue::Folded(val),
+            | "Suggests"
+            | "Uploaders" => ControlValue::Folded(val),
             "Description" => ControlValue::MultiLine(val),
             _ => {
                 debug!("Unknown key: {}", key);
@@ -186,6 +235,7 @@ impl ControlValue {
 }
 
 impl ControlEntry {
+    /// Creates a new `ControlEntry` given a key-value pair.
     pub fn new(key: &str, val: String) -> ControlEntry {
         ControlEntry {
             key: key.to_string(),
@@ -195,6 +245,9 @@ impl ControlEntry {
 }
 
 impl ControlParagraph {
+    #[doc(hidden)]
+    #[deprecated(since = "0.2.0", note = "use `default` instead")]
+    /// Creates a new `ControlParagraph`
     pub fn new() -> ControlParagraph {
         ControlParagraph { entries: vec![] }
     }
@@ -252,6 +305,12 @@ impl Default for ControlParagraph {
 }
 
 impl ControlFile {
+    #[doc(hidden)]
+    #[deprecated(
+        since = "0.2.0",
+        note = "use `from_file` or `default` instead"
+    )]
+    /// Creates a new `ControlFile`.
     pub fn new() -> ControlFile {
         ControlFile { paragraphs: vec![] }
     }
@@ -265,7 +324,7 @@ impl ControlFile {
         let mut buf = io::BufReader::new(file);
         let mut paragraphs = Vec::new();
         let mut cur_entry: Option<String> = None;
-        let mut cur_para = ControlParagraph::new();
+        let mut cur_para = ControlParagraph::default();
         loop {
             let mut line = "".to_string();
 
@@ -317,7 +376,7 @@ impl ControlFile {
             // to the main structure.
             if is_end_of_para && !cur_para.entries.is_empty() {
                 paragraphs.push(cur_para);
-                cur_para = ControlParagraph::new();
+                cur_para = ControlParagraph::default();
             }
 
             // Loop termination condition
@@ -326,9 +385,7 @@ impl ControlFile {
             }
         }
 
-        Ok(ControlFile {
-            paragraphs: paragraphs,
-        })
+        Ok(ControlFile { paragraphs })
     }
 
     pub fn serialize(&self, out_file: &Path) -> io::Result<()> {
@@ -365,7 +422,7 @@ impl Default for ControlFile {
 }
 
 /// Version relations
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum VRel {
     GreaterOrEqual,
     Greater,

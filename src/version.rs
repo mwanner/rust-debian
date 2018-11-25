@@ -90,7 +90,7 @@ impl Version {
             }
         }
         elements.push(cur);
-        Ok(VersionPart { elements: elements })
+        Ok(VersionPart { elements })
     }
 
     pub fn parse(s: &str) -> Result<Version, ParseError> {
@@ -115,12 +115,12 @@ impl Version {
 
         Ok(match (epoch, last_dash) {
             (Some((l, epoch)), Some(r)) => Version {
-                epoch: epoch,
+                epoch,
                 upstream_version: try!(Version::parse_part(&s[l + 1..r])),
                 debian_revision: try!(Version::parse_part(&s[r + 1..])),
             },
             (Some((l, epoch)), None) => Version {
-                epoch: epoch,
+                epoch,
                 upstream_version: try!(Version::parse_part(&s[l + 1..])),
                 debian_revision: VersionPart { elements: vec![] },
             },
