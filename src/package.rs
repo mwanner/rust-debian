@@ -487,7 +487,7 @@ impl fmt::Display for Dependency {
 }
 
 /// Parse a single dependency
-fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
+pub fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
     enum ST {
         PackageName,
         PreVersion,
