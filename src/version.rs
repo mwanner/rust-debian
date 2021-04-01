@@ -116,22 +116,22 @@ impl Version {
         Ok(match (epoch, last_dash) {
             (Some((l, epoch)), Some(r)) => Version {
                 epoch,
-                upstream_version: try!(Version::parse_part(&s[l + 1..r])),
-                debian_revision: try!(Version::parse_part(&s[r + 1..])),
+                upstream_version: Version::parse_part(&s[l + 1..r])?,
+                debian_revision: Version::parse_part(&s[r + 1..])?,
             },
             (Some((l, epoch)), None) => Version {
                 epoch,
-                upstream_version: try!(Version::parse_part(&s[l + 1..])),
+                upstream_version: Version::parse_part(&s[l + 1..])?,
                 debian_revision: VersionPart { elements: vec![] },
             },
             (None, Some(r)) => Version {
                 epoch: 0,
-                upstream_version: try!(Version::parse_part(&s[..r])),
-                debian_revision: try!(Version::parse_part(&s[r + 1..])),
+                upstream_version: Version::parse_part(&s[..r])?,
+                debian_revision: Version::parse_part(&s[r + 1..])?,
             },
             (None, None) => Version {
                 epoch: 0,
-                upstream_version: try!(Version::parse_part(&s[..])),
+                upstream_version: Version::parse_part(&s[..])?,
                 debian_revision: VersionPart { elements: vec![] },
             },
         })
