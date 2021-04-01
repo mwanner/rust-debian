@@ -13,7 +13,7 @@ repository = "https://github.com/mwanner/rust-debian"
 [dependencies]
 chrono = "0.4"
 log = "0.4"
-time = "0.1"
+time = "0.2"
 tempdir = "0.3"
 
 [lib]
