@@ -123,12 +123,12 @@ impl Changelog {
     ///
     /// Reads a Debian changelog file into memory.
     pub fn from_file(in_file: &Path) -> io::Result<Changelog> {
-        let file = try!(File::open(in_file));
+        let file = File::open(in_file)?;
         let mut buf = io::BufReader::new(file);
         let entries = vec![];
         loop {
             let mut line = String::new();
-            try!(buf.read_line(&mut line));
+            buf.read_line(&mut line)?;
             let is_eof = line.is_empty();
 
             // Loop termination condition
@@ -320,7 +320,7 @@ impl ControlFile {
     }
 
     pub fn from_file(in_file: &Path) -> io::Result<ControlFile> {
-        let file = try!(File::open(in_file));
+        let file = File::open(in_file)?;
         let mut buf = io::BufReader::new(file);
         let mut paragraphs = Vec::new();
         let mut cur_entry: Option<String> = None;
@@ -328,7 +328,7 @@ impl ControlFile {
         loop {
             let mut line = "".to_string();
 
-            try!(buf.read_line(&mut line));
+            buf.read_line(&mut line)?;
             let is_eof = line.is_empty();
 
             let (is_end_of_para, is_indented) = {
@@ -402,9 +402,9 @@ impl ControlFile {
                     | ControlValue::MultiLine(v) => v,
                 };
                 let s = entry.key.clone() + ": " + &v + "\n";
-                try!(file.write_all(s.as_bytes()));
+                file.write_all(s.as_bytes())?;
             }
-            try!(file.write_all(b"\n"));
+            file.write_all(b"\n")?;
         }
 
         Ok(())
