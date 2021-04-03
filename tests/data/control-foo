@@ -2,7 +2,7 @@ Source: foo
 Section: unknown
 Priority: extra
 Maintainer: Mickey Mouse <mouse@disney.com>
-Build-Depends: debhelper (>= 9)
+Build-Depends: debhelper (>= 9), libbluetooth-dev [linux-any] <!stage1>, xvfb <!nocheck>
 Standards-Version: 3.9.6
 Homepage: http://disney.com/foo
 
