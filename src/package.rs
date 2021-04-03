@@ -81,7 +81,8 @@ impl ChangelogEntry {
             self.maintainer_name,
             self.maintainer_email,
             self.ts.to_rfc2822()
-        ).to_string()
+        )
+        .to_string()
     }
 }
 
@@ -449,6 +450,7 @@ pub struct SingleDependency {
     pub package: String,
     pub version: Option<(VRel, Version)>,
     pub arch: Option<String>,
+    pub condition: Option<String>,
 }
 
 impl fmt::Display for SingleDependency {
@@ -493,6 +495,8 @@ fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
         InVersionDef,
         PreArch,
         InArch,
+        InDependencyCondition,
+        PreDependencyCondition,
         Done,
     }
     let mut st = ST::PackageName;
@@ -500,6 +504,7 @@ fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
         package: "".to_string(),
         version: None,
         arch: None,
+        condition: None,
     };
     let mut vrel = "".to_string();
     let mut vdef = "".to_string();
@@ -519,6 +524,11 @@ fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
                 if ch.is_whitespace() {
                 } else if ch == '(' {
                     st = ST::InVersionRel;
+                } else if ch == '<' {
+                    st = ST::InDependencyCondition;
+                    result.condition = Some("".to_string());
+                } else if ch == '[' {
+                    st = ST::InArch;
                 } else {
                     return Err("garbage after package name");
                 }
@@ -535,6 +545,12 @@ fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
             }
             ST::InVersionDef => {
                 if ch == ')' {
+                    if let "${binary:Version}" | "${source:Version}" =
+                        vdef.trim()
+                    {
+                        continue;
+                    }
+
                     let version = match Version::parse(vdef.trim()) {
                         Ok(v) => v,
                         Err(_) => return Err("error parsing version"),
@@ -568,9 +584,30 @@ fn parse_single_dep(s: &str) -> Result<SingleDependency, &'static str> {
                     } else {
                         return Err("empty arch given");
                     }
-                    st = ST::Done;
+                    st = ST::PreDependencyCondition;
                 } else {
                     arch.push(ch);
+                }
+            }
+            ST::InDependencyCondition => {
+                if ch == '>' {
+                    st = ST::Done
+                } else {
+                    match result.condition {
+                        Some(ref mut c) => c.push(ch),
+                        _ => unreachable!(),
+                    };
+                }
+            }
+            ST::PreDependencyCondition => {
+                if ch.is_whitespace() {
+                    continue;
+                }
+                if ch == '<' {
+                    st = ST::InDependencyCondition;
+                    result.condition = Some("".to_string());
+                } else {
+                    st = ST::Done;
                 }
             }
             ST::Done => {

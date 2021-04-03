@@ -45,6 +45,17 @@ fn control_file_foo() {
 
     let gp = cf.get_paragraphs().get(0).unwrap();
     assert_eq!(gp.get_entry("Source").unwrap(), "foo");
+
+    let bd = gp.get_entry("Build-Depends").unwrap();
+    let dl = debian::package::parse_dep_list(bd).unwrap();
+
+    let libbluetooth = dl.get(1).unwrap().alternatives.get(0).unwrap();
+    assert_eq!(libbluetooth.arch.as_ref().unwrap(), "linux-any");
+    assert_eq!(libbluetooth.condition.as_ref().unwrap(), "!stage1");
+
+    let xvfb = dl.get(2).unwrap().alternatives.get(0).unwrap();
+    assert_eq!(xvfb.condition.as_ref().unwrap(), "!nocheck");
+    assert_eq!(xvfb.arch, None);
 }
 
 #[test]
