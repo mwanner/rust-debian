@@ -1,12 +1,12 @@
 extern crate debian;
 #[macro_use]
 extern crate log;
-extern crate tempdir;
+extern crate tempfile;
 
 use std::env;
 use std::path::PathBuf;
 
-use tempdir::TempDir;
+use tempfile::TempDir;
 
 use debian::package::{parse_dep_list, ControlFile, VRel};
 use debian::version::{Version, VersionElement, VersionPart};
@@ -24,7 +24,7 @@ fn data_path() -> PathBuf {
 }
 
 fn setup() {
-    let root = TempDir::new("control-file-cycle");
+    let root = TempDir::new();
     let root = root.expect("Should have created a temp directory.");
     assert!(env::set_current_dir(root.path()).is_ok());
     debug!(
