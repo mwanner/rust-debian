@@ -14,7 +14,7 @@ repository = "https://github.com/mwanner/rust-debian"
 chrono = "0.4"
 log = "0.4"
 time = "0.3"
-tempdir = "0.3"
+tempfile = "3"
 
 [lib]
 name = "debian"
