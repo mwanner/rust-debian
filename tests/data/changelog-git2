@@ -1,0 +1,92 @@
+rust-git2 (0.13.23-2) unstable; urgency=medium
+
+  * Team upload.
+  * Package git2 0.13.23 from crates.io using debcargo 2.4.4
+
+ -- Ximin Luo <infinity0@debian.org>  Sun, 24 Oct 2021 00:00:40 +0100
+
+rust-git2 (0.13.23-1) unstable; urgency=medium
+
+  * Team upload.
+  * Package git2 0.13.23 from crates.io using debcargo 2.4.4
+
+ -- Ximin Luo <infinity0@debian.org>  Sat, 23 Oct 2021 20:02:52 +0100
+
+rust-git2 (0.13.11-2) unstable; urgency=medium
+
+  * Team upload.
+  * Package git2 0.13.11 from crates.io using debcargo 2.4.3
+  * Skip the credential_helper5 test if git is not installed.
+
+ -- Peter Michael Green <plugwash@debian.org>  Tue, 08 Dec 2020 16:51:01 +0000
+
+rust-git2 (0.13.11-1) unstable; urgency=medium
+
+  * Package git2 0.13.11 from crates.io using debcargo 2.4.3
+  * Drop the zlib-ng-compat feature, the ftpmasters are rejecting new
+    rust feature packages at the moment and the zlib-ng option in
+    libz-sys seems to be broken in Debian anyway (see bug 972361)
+
+  [ Ximin Luo ]
+  * Team upload.
+  * Package git2 0.13.11 from crates.io using debcargo 2.4.3
+
+ -- Peter Michael Green <plugwash@debian.org>  Mon, 07 Dec 2020 05:05:38 +0000
+
+rust-git2 (0.11.0-1) unstable; urgency=medium
+
+  * Team upload.
+  * Package git2 0.11.0 from crates.io using debcargo 2.4.2
+
+ -- Ximin Luo <infinity0@debian.org>  Sat, 18 Apr 2020 16:11:29 +0100
+
+rust-git2 (0.10.2-3) unstable; urgency=medium
+
+  * Team upload.
+  * Package git2 0.10.2 from crates.io using debcargo 2.4.2
+
+ -- Peter Michael Green <plugwash@debian.org>  Tue, 14 Apr 2020 08:45:51 +0000
+
+rust-git2 (0.10.2-2) unstable; urgency=medium
+
+  * Team upload.
+  * Package git2 0.10.2 from crates.io using debcargo 2.4.2
+
+ -- Peter Michael Green <plugwash@debian.org>  Mon, 13 Apr 2020 18:22:03 +0000
+
+rust-git2 (0.10.2-1) unstable; urgency=medium
+
+  * Package git2 0.10.2 from crates.io using debcargo 2.4.0
+
+ -- Paride Legovini <pl@ninthfloor.org>  Tue, 03 Dec 2019 08:46:04 +0000
+
+rust-git2 (0.10.1-1) unstable; urgency=medium
+
+  * Team upload.
+  * Package git2 0.10.1 from crates.io using debcargo 2.4.0
+  * Do not fail the test when the builds are failing
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Sat, 16 Nov 2019 14:44:16 +0100
+
+rust-git2 (0.8.0-2) unstable; urgency=medium
+
+  * Team upload.
+  * Package git2 0.8.0 from crates.io using debcargo 2.4.0
+
+ -- Ximin Luo <infinity0@debian.org>  Sat, 17 Aug 2019 10:18:18 -0700
+
+rust-git2 (0.8.0-1) unstable; urgency=medium
+
+  * Team upload.
+  * Package git2 0.8.0 from crates.io using debcargo 2.2.10
+
+ -- Ximin Luo <infinity0@debian.org>  Thu, 30 May 2019 21:33:38 -0700
+
+rust-git2 (0.7.5-1) unstable; urgency=medium
+
+  * Package git2 0.7.5 from crates.io using debcargo 2.2.5
+
+  [ Paride Legovini ]
+  * Package git2 0.7.2 from crates.io using debcargo 2.2.3
+
+ -- Ximin Luo <infinity0@debian.org>  Sat, 04 Aug 2018 01:14:59 -0700

@@ -10,8 +10,12 @@ use std::fs::File;
 use std::io;
 use std::io::{BufRead, Write};
 use std::path::Path;
+use std::str::FromStr;
 
+use regex::Regex;
 use chrono::prelude::*;
+
+use anyhow::Result;
 
 use super::Version;
 
@@ -34,7 +38,7 @@ pub struct ChangelogEntry {
     // email of the uploader of the package
     maintainer_email: String,
     // date of the upload
-    ts: DateTime<Local>,
+    ts: DateTime<FixedOffset>,
 }
 
 /// Represents a complete debian/changelog file
@@ -57,7 +61,60 @@ pub struct Changelog {
 
 impl ChangelogEntry {
     /// Create a new ChangelogEntry
-    pub fn new(pkg: String, version: String, detail: String) -> ChangelogEntry {
+    pub fn new(
+        source: String,
+        version: String,
+        distribution: String,
+        options: String,
+        maintainer: String,
+        date: DateTime<FixedOffset>,
+        items: Vec<String>,
+    ) -> Self {
+        ChangelogEntry {
+            pkg: source,
+            version,
+            distributions: vec![distribution],
+            urgency: options,
+            detail: items.join("\n"),
+            maintainer_name: maintainer.clone(),
+            maintainer_email: maintainer,
+            ts: date,
+        }
+    }
+
+    pub fn get_pkg(&self) -> &String {
+        &self.pkg
+    }
+
+    pub fn get_version(&self) -> &String {
+        &self.version
+    }
+
+    pub fn get_distributions(&self) -> &Vec<String> {
+        &self.distributions
+    }
+
+    pub fn get_urgency(&self) -> &String {
+        &self.urgency
+    }
+
+    pub fn get_detail(&self) -> &String {
+        &self.detail
+    }
+
+    pub fn get_maintainer_name(&self) -> &String {
+        &self.maintainer_name
+    }
+
+    pub fn get_maintainer_email(&self) -> &String {
+        &self.maintainer_email
+    }
+
+    pub fn get_ts(&self) -> &DateTime<FixedOffset> {
+        &self.ts
+    }
+
+    pub fn new_old(pkg: String, version: String, detail: String) -> ChangelogEntry {
         ChangelogEntry {
             pkg,
             version,
@@ -66,7 +123,7 @@ impl ChangelogEntry {
             detail,
             maintainer_name: get_default_maintainer_name(),
             maintainer_email: get_default_maintainer_email(),
-            ts: Local::now(),
+            ts: Utc::now().with_timezone(&FixedOffset::east(0)),
         }
     }
 
@@ -83,6 +140,49 @@ impl ChangelogEntry {
             self.ts.to_rfc2822()
         )
         .to_string()
+    }
+}
+
+fn line_is_blank(s: &str) -> bool {
+    s.chars().all(char::is_whitespace)
+}
+
+impl FromStr for ChangelogEntry {
+    type Err = anyhow::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut lines = s.lines().collect::<Vec<_>>();
+        // see https://manpages.debian.org/testing/dpkg-dev/deb-changelog.5.en.html
+        // regexes adapted from /usr/share/perl5/Dpkg/Changelog/Entry/Debian.pm
+
+        let firstline = lines[0];
+        let re1 =
+            Regex::new(r"(?i)^(\w[-+0-9a-z.]*) \(([^\(\) \t]+)\)((?:\s+[-+0-9a-z.]+)+);(.*?)\s*$")?;
+        let matches1 = re1.captures(firstline).ok_or(anyhow!("first line of ChangelogEntry doesn't parse"))?;
+        let mut i = 1;
+        while line_is_blank(lines[i]) {
+            i += 1;
+        }
+        lines = lines.split_off(i);
+
+        while line_is_blank(lines.last().ok_or(anyhow!("ran out of lines parsing ChangelogEntry"))?) {
+            lines.pop();
+        }
+        let lastline = lines.pop().ok_or(anyhow!("ran out of lines parsing ChangelogEntry"))?;
+        while line_is_blank(lines.last().ok_or(anyhow!("ran out of lines parsing ChangelogEntry"))?) {
+            lines.pop();
+        }
+        let re2 = Regex::new(r"^ \-\- ((?:.*) <(?:.*)>)  ?(\w.*\S)\s*$")?;
+        let matches2 = re2.captures(lastline).ok_or(anyhow!("last line of ChangelogEntry doesn't parse"))?;
+
+        Ok(Self::new(
+            matches1[1].to_string(),
+            matches1[2].to_string(),
+            matches1[3].to_string(),
+            matches1[4].to_string(),
+            matches2[1].to_string(),
+            DateTime::parse_from_rfc2822(&matches2[2])?,
+            lines.iter().map(|s| s.to_string()).collect(),
+        ))
     }
 }
 
@@ -123,22 +223,15 @@ impl Changelog {
     /// Deserialize a debian/changelog file from disk.
     ///
     /// Reads a Debian changelog file into memory.
-    pub fn from_file(in_file: &Path) -> io::Result<Changelog> {
-        let file = File::open(in_file)?;
-        let mut buf = io::BufReader::new(file);
-        let entries = vec![];
-        loop {
-            let mut line = String::new();
-            buf.read_line(&mut line)?;
-            let is_eof = line.is_empty();
-
-            // Loop termination condition
-            if is_eof {
-                break;
-            }
-        }
+    pub fn from_file(in_file: &Path) -> Result<Changelog> {
+        let buf = std::fs::read_to_string(in_file)?;
+        let entries = ChangelogIterator::from(&buf).map(|s| ChangelogEntry::from_str(s)).collect::<Result<Vec<ChangelogEntry>, anyhow::Error>>()?;
 
         Ok(Changelog { entries })
+    }
+
+    pub fn entries(&self) -> &Vec<ChangelogEntry> {
+        &self.entries
     }
 }
 
@@ -147,6 +240,48 @@ impl Default for Changelog {
         Changelog {
             entries: Vec::new(),
         }
+    }
+}
+
+
+struct ChangelogIterator<'a> {
+    input: &'a [u8],
+    index: usize,
+}
+
+impl<'a> ChangelogIterator<'a> {
+    pub fn from(input: &'a str) -> ChangelogIterator<'a> {
+        ChangelogIterator {
+            input: input.as_bytes(),
+            index: 0,
+        }
+    }
+}
+
+impl<'a> Iterator for ChangelogIterator<'a> {
+    type Item = &'a str;
+
+    #[inline]
+    fn next(&mut self) -> Option<&'a str> {
+        let slice = &self.input[self.index..];
+        if slice.is_empty() {
+            return None;
+        }
+        let mut result = slice;
+        // ghetto parser; also hack around the fact rust's str doesn't
+        // support proper indexing, boo
+        for (i, c) in slice.iter().enumerate() {
+            if *c != b'\n' {
+                continue;
+            }
+            if i < (slice.len() - 1) && (slice[i + 1] as char).is_whitespace() {
+                continue;
+            }
+            self.index += i + 1;
+            result = &slice[..=i];
+            break;
+        }
+        Some(std::str::from_utf8(result).unwrap())
     }
 }
 

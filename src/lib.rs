@@ -14,6 +14,9 @@
 extern crate chrono;
 #[macro_use]
 extern crate log;
+extern crate regex;
+#[macro_use]
+extern crate anyhow;
 
 pub mod package;
 pub mod version;

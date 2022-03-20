@@ -2,13 +2,16 @@ extern crate debian;
 #[macro_use]
 extern crate log;
 extern crate tempfile;
+extern crate chrono;
 
 use std::env;
 use std::path::PathBuf;
 
 use tempfile::TempDir;
 
-use debian::package::{parse_dep_list, ControlFile, VRel};
+use chrono::prelude::*;
+
+use debian::package::{parse_dep_list, ControlFile, VRel, Changelog};
 use debian::version::{Version, VersionElement, VersionPart};
 
 fn data_path() -> PathBuf {
@@ -32,6 +35,25 @@ fn setup() {
         root.path().display(),
         data_path().display()
     );
+}
+
+#[test]
+fn changelog_file_git2() {
+    setup();
+
+    let path = data_path().join("changelog-git2");
+
+    let changelog = Changelog::from_file(&path).unwrap();
+
+    assert_eq!(12, changelog.entries().len());
+    assert_eq!("rust-git2", changelog.entries()[0].get_pkg());
+    assert_eq!("0.13.23-2", changelog.entries()[0].get_version());
+    assert_eq!(vec![" unstable".to_owned()], *changelog.entries()[0].get_distributions());
+    assert_eq!(" urgency=medium", changelog.entries()[0].get_urgency());
+    assert_eq!("  * Team upload.\n  * Package git2 0.13.23 from crates.io using debcargo 2.4.4", changelog.entries()[0].get_detail());
+    assert_eq!("Ximin Luo <infinity0@debian.org>", changelog.entries()[0].get_maintainer_name());
+    assert_eq!("Ximin Luo <infinity0@debian.org>", changelog.entries()[0].get_maintainer_email());
+    assert_eq!(FixedOffset::east(3600).ymd(2021, 10, 24).and_hms_milli(0, 0, 40, 0), *changelog.entries()[0].get_ts());
 }
 
 #[test]
