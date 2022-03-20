@@ -57,6 +57,18 @@ fn changelog_file_git2() {
 }
 
 #[test]
+fn changelog_file_serde_json() {
+    setup();
+
+    let path = data_path().join("changelog-serde-json");
+
+    let changelog = Changelog::from_file(&path);
+
+    assert!(changelog.is_err());
+    assert_eq!("last line of ChangelogEntry doesn't parse", format!("{:?}", changelog.err().unwrap()));
+}
+
+#[test]
 fn control_file_foo() {
     setup();
 
