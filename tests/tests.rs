@@ -164,3 +164,22 @@ fn dependency_basics() {
         ))
     );
 }
+
+#[cfg(feature = "serde_support")]
+#[test]
+fn serde_tests() {
+    let data = r#"[
+        "8:1.8-0~bpo2",
+        "1.8-0",
+        "1:1:1-8-8"
+    ]"#;
+    let versions: Vec<Version> = serde_json::from_str(data).unwrap();
+    assert_eq!(versions.len(), 3);
+    assert_eq!(versions[0], Version::parse("8:1.8-0~bpo2").unwrap());
+    assert_eq!(versions[1], Version::parse("1.8-0").unwrap());
+    assert_eq!(versions[2], Version::parse("1:1:1-8-8").unwrap());
+
+    // test serialization
+    let ser = serde_json::to_string(&versions).unwrap();
+    assert_eq!(ser, r#"["8:1.8-0~bpo2","1.8-0","1:1:1-8-8"]"#);
+}

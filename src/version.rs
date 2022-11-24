@@ -23,6 +23,16 @@ impl fmt::Display for VersionElement {
     }
 }
 
+#[cfg(feature = "serde_support")]
+impl serde::Serialize for VersionElement {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer {
+            let b = format!("{}{}", self.alpha, self.numeric);
+            serializer.serialize_str(b.as_str())
+    }
+}
+
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd)]
 pub struct VersionPart {
     pub elements: Vec<VersionElement>,
@@ -43,6 +53,15 @@ impl fmt::Display for VersionPart {
             .collect::<Vec<String>>()
             .concat();
         write!(f, "{}", s)
+    }
+}
+#[cfg(feature = "serde_support")]
+impl serde::Serialize for VersionPart {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer {
+            let b = self.to_string();
+            serializer.serialize_str(b.as_str())
     }
 }
 
@@ -172,5 +191,43 @@ impl fmt::Display for Version {
                 self.epoch, &self.upstream_version, &self.debian_revision
             ),
         }
+    }
+}
+
+#[cfg(feature = "serde_support")]
+impl serde::Serialize for Version {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer {
+            let b = self.to_string();
+            serializer.serialize_str(b.as_str())
+    }
+}
+
+#[cfg(feature = "serde_support")]
+struct VersionVisitor;
+
+#[cfg(feature = "serde_support")]
+impl<'de> serde::de::Visitor<'de> for VersionVisitor {
+    type Value = Version;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a debian version string")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: serde::de::Error, {
+        Version::parse(v).map_err(|err| E::custom(err.msg))
+    }
+}
+
+#[cfg(feature = "serde_support")]
+impl<'de> serde::Deserialize<'de> for Version {
+    fn deserialize<D>(deserializer: D) -> Result<Version, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(VersionVisitor)
     }
 }
