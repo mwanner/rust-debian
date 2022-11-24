@@ -13,7 +13,7 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
+          profile: default
           toolchain: stable
           override: true
 
@@ -31,4 +31,5 @@ jobs:
       - name: Run cargo clippy
         uses: actions-rs/clippy-check@v1
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           args: -F serde_support
