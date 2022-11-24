@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Eq, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct VersionElement {
     pub alpha: String,
     pub numeric: u64,
@@ -14,6 +14,18 @@ impl Ord for VersionElement {
         assert!(other.alpha.is_empty());
         // FIXME: compare alpha, first!
         self.numeric.cmp(&other.numeric)
+    }
+}
+
+impl PartialOrd for VersionElement {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        let rv = self.numeric.partial_cmp(&other.numeric);
+        if let Some(x) = rv {
+            if x == Ordering::Equal {
+                return self.alpha.partial_cmp(&other.alpha)
+            }
+        }
+        rv
     }
 }
 
@@ -33,7 +45,7 @@ impl serde::Serialize for VersionElement {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub struct VersionPart {
     pub elements: Vec<VersionElement>,
 }
@@ -65,7 +77,7 @@ impl serde::Serialize for VersionPart {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Version {
     pub epoch: u32,
     pub upstream_version: VersionPart,
@@ -90,7 +102,7 @@ impl Version {
             numeric: 0,
         };
         for c in s.chars() {
-            match (in_numeric_part, c.is_digit(10)) {
+            match (in_numeric_part, c.is_ascii_digit()) {
                 (false, false) => cur.alpha.push(c),
                 (_, true) => {
                     in_numeric_part = true;
@@ -150,7 +162,7 @@ impl Version {
             },
             (None, None) => Version {
                 epoch: 0,
-                upstream_version: Version::parse_part(&s[..])?,
+                upstream_version: Version::parse_part(s)?,
                 debian_revision: VersionPart { elements: vec![] },
             },
         })
@@ -167,11 +179,29 @@ impl FromStr for Version {
 
 impl Ord for Version {
     fn cmp(&self, other: &Version) -> Ordering {
-        let epoch_cmp = self.epoch.cmp(&other.epoch);
-        match epoch_cmp {
-            Ordering::Equal => Ordering::Equal,
-            ord => ord,
+        match self.epoch.cmp(&other.epoch) {
+            core::cmp::Ordering::Equal => {}
+            ord => return ord,
         }
+        match self.upstream_version.cmp(&other.upstream_version) {
+            core::cmp::Ordering::Equal => {}
+            ord => return ord,
+        }
+        self.debian_revision.cmp(&other.debian_revision)
+    }
+}
+
+impl PartialOrd for Version {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match self.epoch.partial_cmp(&other.epoch) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+        match self.upstream_version.partial_cmp(&other.upstream_version) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+        self.debian_revision.partial_cmp(&other.debian_revision)
     }
 }
 

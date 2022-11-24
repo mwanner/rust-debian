@@ -52,7 +52,7 @@ pub struct ChangelogEntry {
 /// let changelog = Changelog::from_file(Path::new("debian/changelog"));
 /// ```
 #[cfg_attr(feature = "serde_support", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Changelog {
     entries: Vec<ChangelogEntry>,
 }
@@ -84,7 +84,6 @@ impl ChangelogEntry {
             self.maintainer_email,
             self.ts.to_rfc2822()
         )
-        .to_string()
     }
 }
 
@@ -144,14 +143,6 @@ impl Changelog {
     }
 }
 
-impl Default for Changelog {
-    fn default() -> Self {
-        Changelog {
-            entries: Vec::new(),
-        }
-    }
-}
-
 /// A helper routine to determine the default Debian maintainer name
 /// from the environment.
 pub fn get_default_maintainer_name() -> String {
@@ -198,14 +189,14 @@ pub struct ControlEntry {
 
 /// A paragraph consisting of multiple entries of type `ControlEntry`.
 #[cfg_attr(feature = "serde_support", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ControlParagraph {
     entries: Vec<ControlEntry>,
 }
 
 /// A control file consisting of multiple paragraphs.
 #[cfg_attr(feature = "serde_support", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ControlFile {
     paragraphs: Vec<ControlParagraph>,
 }
@@ -305,11 +296,6 @@ impl ControlParagraph {
     }
 }
 
-impl Default for ControlParagraph {
-    fn default() -> Self {
-        ControlParagraph { entries: vec![] }
-    }
-}
 
 impl ControlFile {
     #[doc(hidden)]
@@ -422,11 +408,6 @@ impl ControlFile {
     }
 }
 
-impl Default for ControlFile {
-    fn default() -> Self {
-        ControlFile { paragraphs: vec![] }
-    }
-}
 
 /// Version relations
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -466,8 +447,8 @@ impl fmt::Display for SingleDependency {
             (&Some((ref vrel, ref ver)), &None) => {
                 write!(f, "{} ({} {})", self.package, vrel, ver)
             }
-            (&None, &Some(ref a)) => write!(f, "{} [{}]", self.package, a),
-            (&Some((ref vrel, ref ver)), &Some(ref a)) => {
+            (&None, Some(a)) => write!(f, "{} [{}]", self.package, a),
+            (&Some((ref vrel, ref ver)), Some(a)) => {
                 write!(f, "{} ({} {}) [{}]", self.package, vrel, ver, a)
             }
         }

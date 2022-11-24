@@ -110,6 +110,18 @@ fn version_comparisons() {
         Version::parse("0:1.0").unwrap(),
         Version::parse("1.0").unwrap()
     );
+    assert!(Version::parse("7:1.8-0~bpo2").unwrap() < Version::parse("8:1.8-0~bpo2").unwrap());
+    assert!(Version::parse("8:1.8-0~bpo1").unwrap() < Version::parse("8:1.8-0~bpo2").unwrap());
+    assert!(Version::parse("8:1.8-0~bpo2").unwrap() < Version::parse("8:1.8-1~bpo2").unwrap());
+    assert!(Version::parse("8:1.7-0~bpo2").unwrap() < Version::parse("8:1.8-0~bpo2").unwrap());
+    assert!(Version::parse("8:0.8-0~bpo2").unwrap() < Version::parse("8:1.8-0~bpo2").unwrap());
+
+    assert!(Version::parse("9:1.8-0~bpo2").unwrap() > Version::parse("8:1.8-0~bpo2").unwrap());
+    assert!(Version::parse("8:1.8-0~bpo3").unwrap() > Version::parse("8:1.8-0~bpo2").unwrap());
+    assert!(Version::parse("8:1.8-2~bpo2").unwrap() > Version::parse("8:1.8-1~bpo2").unwrap());
+    assert!(Version::parse("8:1.9-0~bpo2").unwrap() > Version::parse("8:1.8-0~bpo2").unwrap());
+    assert!(Version::parse("8:2.8-0~bpo2").unwrap() > Version::parse("8:1.8-0~bpo2").unwrap());
+
 }
 
 #[test]
