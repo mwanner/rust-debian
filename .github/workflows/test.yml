@@ -27,3 +27,8 @@ jobs:
         with:
           command: test
           args: -F serde_support
+
+      - name: Run cargo clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          args: -F serde_support
