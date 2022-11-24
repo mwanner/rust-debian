@@ -138,6 +138,14 @@ impl Version {
     }
 }
 
+impl FromStr for Version {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Version::parse(s)
+    }
+}
+
 impl Ord for Version {
     fn cmp(&self, other: &Version) -> Ordering {
         let epoch_cmp = self.epoch.cmp(&other.epoch);

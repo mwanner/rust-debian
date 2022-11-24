@@ -5,6 +5,7 @@ extern crate tempfile;
 
 use std::env;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use tempfile::TempDir;
 
@@ -77,6 +78,7 @@ fn version_basics() {
     assert_eq!(&v.upstream_version.to_string(), "2.1.4");
     assert_eq!(&v.upstream_version.to_string(), "2.1.4");
     assert_eq!(&v.debian_revision.to_string(), "0~bpo2");
+    assert_eq!(Version::from_str("7:2.1.4-0~bpo2").unwrap(), v);
 
     let v = Version::parse("2.1.4-0~bpo2").unwrap();
     assert_eq!(v.epoch, 0);
