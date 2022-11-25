@@ -35,7 +35,7 @@ impl fmt::Display for VersionElement {
     }
 }
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
 impl serde::Serialize for VersionElement {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -67,7 +67,7 @@ impl fmt::Display for VersionPart {
         write!(f, "{}", s)
     }
 }
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
 impl serde::Serialize for VersionPart {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -224,7 +224,7 @@ impl fmt::Display for Version {
     }
 }
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
 impl serde::Serialize for Version {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -234,10 +234,10 @@ impl serde::Serialize for Version {
     }
 }
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
 struct VersionVisitor;
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
 impl<'de> serde::de::Visitor<'de> for VersionVisitor {
     type Value = Version;
 
@@ -252,7 +252,7 @@ impl<'de> serde::de::Visitor<'de> for VersionVisitor {
     }
 }
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for Version {
     fn deserialize<D>(deserializer: D) -> Result<Version, D::Error>
     where
