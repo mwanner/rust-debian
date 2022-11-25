@@ -18,7 +18,7 @@ tempfile = "3"
 serde = { version = "1.0.147", optional = true, features = [ "derive" ]}
 
 [features]
-serde_support = ["chrono/serde", "serde" ]
+serde = ["chrono/serde", "dep:serde" ]
 
 [lib]
 name = "debian"

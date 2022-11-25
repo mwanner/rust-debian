@@ -16,7 +16,7 @@ use chrono::prelude::*;
 use super::Version;
 
 /// Represents a single entry in a debian/changelog file.
-#[cfg_attr(feature = "serde_support", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug)]
 pub struct ChangelogEntry {
     /// source package name
@@ -51,7 +51,7 @@ pub struct ChangelogEntry {
 ///
 /// let changelog = Changelog::from_file(Path::new("debian/changelog"));
 /// ```
-#[cfg_attr(feature = "serde_support", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Default)]
 pub struct Changelog {
     entries: Vec<ChangelogEntry>,
@@ -168,7 +168,7 @@ pub fn get_default_maintainer_email() -> String {
 }
 
 /// A value in a field of a control file
-#[cfg_attr(feature = "serde_support", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub enum ControlValue {
     /// A simple string value
@@ -180,7 +180,7 @@ pub enum ControlValue {
 }
 
 /// A single field or entry in a control file
-#[cfg_attr(feature = "serde_support", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub struct ControlEntry {
     key: String,
@@ -188,14 +188,14 @@ pub struct ControlEntry {
 }
 
 /// A paragraph consisting of multiple entries of type `ControlEntry`.
-#[cfg_attr(feature = "serde_support", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Default)]
 pub struct ControlParagraph {
     entries: Vec<ControlEntry>,
 }
 
 /// A control file consisting of multiple paragraphs.
-#[cfg_attr(feature = "serde_support", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Default)]
 pub struct ControlFile {
     paragraphs: Vec<ControlParagraph>,

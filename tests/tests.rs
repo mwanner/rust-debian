@@ -177,7 +177,7 @@ fn dependency_basics() {
     );
 }
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
 #[test]
 fn serde_tests() {
     let data = r#"[
