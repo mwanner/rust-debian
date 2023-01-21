@@ -296,7 +296,6 @@ impl ControlParagraph {
     }
 }
 
-
 impl ControlFile {
     #[doc(hidden)]
     #[deprecated(
@@ -407,7 +406,6 @@ impl ControlFile {
         &self.paragraphs
     }
 }
-
 
 /// Version relations
 #[derive(Debug, PartialEq, Clone, Copy)]

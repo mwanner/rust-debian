@@ -22,7 +22,7 @@ impl PartialOrd for VersionElement {
         let rv = self.numeric.partial_cmp(&other.numeric);
         if let Some(x) = rv {
             if x == Ordering::Equal {
-                return self.alpha.partial_cmp(&other.alpha)
+                return self.alpha.partial_cmp(&other.alpha);
             }
         }
         rv
@@ -39,9 +39,10 @@ impl fmt::Display for VersionElement {
 impl serde::Serialize for VersionElement {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer {
-            let b = format!("{}{}", self.alpha, self.numeric);
-            serializer.serialize_str(b.as_str())
+        S: serde::Serializer,
+    {
+        let b = format!("{}{}", self.alpha, self.numeric);
+        serializer.serialize_str(b.as_str())
     }
 }
 
@@ -71,9 +72,10 @@ impl fmt::Display for VersionPart {
 impl serde::Serialize for VersionPart {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer {
-            let b = self.to_string();
-            serializer.serialize_str(b.as_str())
+        S: serde::Serializer,
+    {
+        let b = self.to_string();
+        serializer.serialize_str(b.as_str())
     }
 }
 
@@ -228,9 +230,10 @@ impl fmt::Display for Version {
 impl serde::Serialize for Version {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer {
-            let b = self.to_string();
-            serializer.serialize_str(b.as_str())
+        S: serde::Serializer,
+    {
+        let b = self.to_string();
+        serializer.serialize_str(b.as_str())
     }
 }
 
@@ -246,8 +249,9 @@ impl<'de> serde::de::Visitor<'de> for VersionVisitor {
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-        where
-            E: serde::de::Error, {
+    where
+        E: serde::de::Error,
+    {
         Version::parse(v).map_err(|err| E::custom(err.msg))
     }
 }
