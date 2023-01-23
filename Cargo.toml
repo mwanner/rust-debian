@@ -9,6 +9,7 @@ control files for packaging, comparing versions (the Debian way) or
 interacting with apt.
 """
 repository = "https://github.com/mwanner/rust-debian"
+rust-version = "1.60"
 
 [dependencies]
 chrono = { version = "0.4" }
