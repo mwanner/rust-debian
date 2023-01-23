@@ -65,7 +65,7 @@ impl fmt::Display for VersionPart {
             .map(|x| x.to_string())
             .collect::<Vec<String>>()
             .concat();
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 #[cfg(feature = "serde")]
