@@ -464,10 +464,10 @@ impl fmt::Display for Dependency {
         let alts = self
             .alternatives
             .iter()
-            .map(|x| format!("{}", x))
+            .map(|x| format!("{x}"))
             .collect::<Vec<String>>()
             .join(" | ");
-        write!(f, "{}", alts)
+        write!(f, "{alts}")
     }
 }
 
