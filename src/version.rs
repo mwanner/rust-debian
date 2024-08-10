@@ -10,22 +10,16 @@ pub struct VersionElement {
 
 impl Ord for VersionElement {
     fn cmp(&self, other: &VersionElement) -> Ordering {
-        assert!(self.alpha.is_empty());
-        assert!(other.alpha.is_empty());
-        // FIXME: compare alpha, first!
-        self.numeric.cmp(&other.numeric)
+        match self.numeric.cmp(&other.numeric) {
+            Ordering::Equal => self.alpha.cmp(&other.alpha),
+            x => x,
+        }
     }
 }
 
 impl PartialOrd for VersionElement {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let rv = self.numeric.partial_cmp(&other.numeric);
-        if let Some(x) = rv {
-            if x == Ordering::Equal {
-                return self.alpha.partial_cmp(&other.alpha);
-            }
-        }
-        rv
+        Some(self.cmp(other))
     }
 }
 
@@ -182,11 +176,11 @@ impl FromStr for Version {
 impl Ord for Version {
     fn cmp(&self, other: &Version) -> Ordering {
         match self.epoch.cmp(&other.epoch) {
-            core::cmp::Ordering::Equal => {}
+            Ordering::Equal => {}
             ord => return ord,
         }
         match self.upstream_version.cmp(&other.upstream_version) {
-            core::cmp::Ordering::Equal => {}
+            Ordering::Equal => {}
             ord => return ord,
         }
         self.debian_revision.cmp(&other.debian_revision)
@@ -195,15 +189,7 @@ impl Ord for Version {
 
 impl PartialOrd for Version {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match self.epoch.partial_cmp(&other.epoch) {
-            Some(core::cmp::Ordering::Equal) => {}
-            ord => return ord,
-        }
-        match self.upstream_version.partial_cmp(&other.upstream_version) {
-            Some(core::cmp::Ordering::Equal) => {}
-            ord => return ord,
-        }
-        self.debian_revision.partial_cmp(&other.debian_revision)
+        Some(self.cmp(other))
     }
 }
 

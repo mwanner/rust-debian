@@ -113,8 +113,8 @@ impl Changelog {
             Err(f) => return Err(f),
         };
         for entry in &self.entries {
-            match file.write(entry.serialize().as_bytes()) {
-                Ok(_) => {}
+            match file.write_all(entry.serialize().as_bytes()) {
+                Ok(()) => {}
                 Err(f) => return Err(f),
             }
         }
