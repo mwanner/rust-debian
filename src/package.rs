@@ -12,6 +12,7 @@ use std::io::{BufRead, Write};
 use std::path::Path;
 
 use chrono::prelude::*;
+use log::*;
 
 use super::Version;
 
@@ -108,10 +109,7 @@ impl Changelog {
     ///
     /// This function uses `File::create` and forwards any possible error.
     pub fn to_file(&self, out_file_path: &Path) -> io::Result<()> {
-        let mut file = match File::create(out_file_path) {
-            Ok(f) => f,
-            Err(f) => return Err(f),
-        };
+        let mut file = File::create(out_file_path)?;
         for entry in &self.entries {
             match file.write_all(entry.serialize().as_bytes()) {
                 Ok(()) => {}
@@ -381,11 +379,7 @@ impl ControlFile {
     }
 
     pub fn serialize(&self, out_file: &Path) -> io::Result<()> {
-        let mut file = match File::create(out_file) {
-            Ok(f) => f,
-            Err(e) => return Err(e),
-        };
-
+        let mut file = File::create(out_file)?;
         for para in &self.paragraphs {
             for entry in &para.entries {
                 let v = match entry.value.clone() {
@@ -613,10 +607,7 @@ pub fn parse_dep_list(s: &str) -> Result<Vec<Dependency>, &'static str> {
     for s in s.split(',').map(|x| x.trim()) {
         let mut a = vec![];
         for sd in s.split('|').map(|x| x.trim()) {
-            a.push(match parse_single_dep(sd) {
-                Ok(v) => v,
-                Err(e) => return Err(e),
-            });
+            a.push(parse_single_dep(sd)?);
         }
         result.push(Dependency { alternatives: a });
     }

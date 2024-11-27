@@ -9,7 +9,7 @@ control files for packaging, comparing versions (the Debian way) or
 interacting with apt.
 """
 repository = "https://github.com/mwanner/rust-debian"
-rust-version = "1.67"
+rust-version = "1.67.1"
 edition = "2021"
 
 [dependencies]
@@ -20,7 +20,7 @@ tempfile = "3"
 serde = { version = "1.0.147", optional = true, features = [ "derive" ]}
 
 [features]
-serde = ["chrono/serde", "dep:serde" ]
+serde = ["chrono/serde", "dep:serde"]
 
 [lib]
 name = "debian"

@@ -13,7 +13,7 @@ jobs:
         rust:
           - nightly
           - stable
-          - 1.67.0
+          - 1.67.1
 
     steps:
       - name: Checkout sources
