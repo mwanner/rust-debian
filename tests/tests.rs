@@ -9,7 +9,7 @@ use std::str::FromStr;
 
 use tempfile::TempDir;
 
-use debian::package::{parse_dep_list, ControlFile, VRel};
+use debian::control::{parse_dep_list, ControlFile, VRel};
 use debian::version::{Version, VersionElement, VersionPart};
 
 fn data_path() -> PathBuf {
@@ -48,7 +48,7 @@ fn control_file_foo() {
     assert_eq!(gp.get_entry("Source").unwrap(), "foo");
 
     let bd = gp.get_entry("Build-Depends").unwrap();
-    let dl = debian::package::parse_dep_list(bd).unwrap();
+    let dl = parse_dep_list(bd).unwrap();
 
     let libbluetooth = dl.get(1).unwrap().alternatives.get(0).unwrap();
     assert_eq!(libbluetooth.arch.as_ref().unwrap(), "linux-any");
