@@ -1,16 +1,11 @@
-extern crate debian;
-#[macro_use]
-extern crate log;
-extern crate tempfile;
-
 use std::env;
 use std::path::PathBuf;
-use std::str::FromStr;
 
+use log::*;
 use tempfile::TempDir;
 
-use debian::package::{parse_dep_list, ControlFile, VRel};
-use debian::version::{Version, VersionElement, VersionPart};
+use debian::control::{parse_dep_list, ControlFile, VRel};
+use debian::{Version, VersionElement, VersionPart};
 
 fn data_path() -> PathBuf {
     // Not sure what the best way is - this works when invoked from cargo.
@@ -48,7 +43,7 @@ fn control_file_foo() {
     assert_eq!(gp.get_entry("Source").unwrap(), "foo");
 
     let bd = gp.get_entry("Build-Depends").unwrap();
-    let dl = debian::package::parse_dep_list(bd).unwrap();
+    let dl = parse_dep_list(bd).unwrap();
 
     let libbluetooth = dl.get(1).unwrap().alternatives.get(0).unwrap();
     assert_eq!(libbluetooth.arch.as_ref().unwrap(), "linux-any");
@@ -65,92 +60,42 @@ fn control_file_postgis() {
 
     let path = data_path().join("control-postgis");
     let cf = ControlFile::from_file(&path).unwrap();
-    assert!(cf.get_paragraphs().len() == 10);
+    assert_eq!(cf.get_paragraphs().len(), 10, "number of paragraphs");
 
     let gp = cf.get_paragraphs().get(0).unwrap();
     assert_eq!(gp.get_entry("Source").unwrap(), "postgis");
 }
 
 #[test]
-fn version_basics() {
-    let v = Version::parse("7:2.1.4-0~bpo2").unwrap();
-    assert_eq!(v.epoch, 7);
-    assert_eq!(&v.upstream_version.to_string(), "2.1.4");
-    assert_eq!(&v.upstream_version.to_string(), "2.1.4");
-    assert_eq!(&v.debian_revision.to_string(), "0~bpo2");
-    assert_eq!(Version::from_str("7:2.1.4-0~bpo2").unwrap(), v);
+fn control_file_fbautostart() {
+    setup();
 
-    let v = Version::parse("2.1.4-0~bpo2").unwrap();
-    assert_eq!(v.epoch, 0);
-    assert_eq!(&v.upstream_version.to_string(), "2.1.4");
-    assert_eq!(&v.debian_revision.to_string(), "0~bpo2");
+    let path = data_path().join("control-fbautostart");
+    let cf = ControlFile::from_file(&path).unwrap();
+    assert_eq!(cf.get_paragraphs().len(), 2, "number of paragraphs");
 
-    let v = Version::parse("7:2.1.4").unwrap();
-    assert_eq!(v.epoch, 7);
-    assert_eq!(v.upstream_version.to_string(), "2.1.4");
-    assert_eq!(v.debian_revision.to_string(), "");
-
-    let v = Version::parse("2.1.4").unwrap();
-    assert_eq!(v.epoch, 0);
-    assert_eq!(v.upstream_version.to_string(), "2.1.4");
-    assert_eq!(v.debian_revision.to_string(), "");
-
-    let v = Version::parse("1:1:1-8-8").unwrap();
-    assert_eq!(v.epoch, 1);
-    assert_eq!(v.upstream_version.to_string(), "1:1-8");
-    assert_eq!(v.debian_revision.to_string(), "8");
-}
-
-#[test]
-fn version_comparisons() {
-    let v = Version::parse("7:2.1.4-0~bpo2").unwrap();
-    assert!(v < Version::parse("8:1.8-0~bpo2").unwrap());
-
+    let source = cf.get_paragraphs().get(0).unwrap();
     assert_eq!(
-        Version::parse("0:1.0").unwrap(),
-        Version::parse("1.0").unwrap()
+        source.get_entry("Maintainer").unwrap(),
+        "Paul Tagliamonte <paultag@ubuntu.com>"
     );
-    assert!(
-        Version::parse("7:1.8-0~bpo2").unwrap()
-            < Version::parse("8:1.8-0~bpo2").unwrap()
-    );
-    assert!(
-        Version::parse("8:1.8-0~bpo1").unwrap()
-            < Version::parse("8:1.8-0~bpo2").unwrap()
-    );
-    assert!(
-        Version::parse("8:1.8-0~bpo2").unwrap()
-            < Version::parse("8:1.8-1~bpo2").unwrap()
-    );
-    assert!(
-        Version::parse("8:1.7-0~bpo2").unwrap()
-            < Version::parse("8:1.8-0~bpo2").unwrap()
-    );
-    assert!(
-        Version::parse("8:0.8-0~bpo2").unwrap()
-            < Version::parse("8:1.8-0~bpo2").unwrap()
+    assert_eq!(source.get_entry("Source").unwrap(), "fbautostart");
+
+    let bd_str = source.get_entry("Build-Depends").unwrap();
+    let bd = parse_dep_list(bd_str).unwrap();
+    assert_eq!(bd.len(), 1);
+    assert_eq!(bd[0].alternatives.len(), 1);
+
+    let first_dep = &bd[0].alternatives[0];
+    assert_eq!(first_dep.package, "debhelper");
+    assert_eq!(
+        first_dep.version,
+        Some((VRel::GreaterOrEqual, Version::parse("9").unwrap()))
     );
 
-    assert!(
-        Version::parse("9:1.8-0~bpo2").unwrap()
-            > Version::parse("8:1.8-0~bpo2").unwrap()
-    );
-    assert!(
-        Version::parse("8:1.8-0~bpo3").unwrap()
-            > Version::parse("8:1.8-0~bpo2").unwrap()
-    );
-    assert!(
-        Version::parse("8:1.8-2~bpo2").unwrap()
-            > Version::parse("8:1.8-1~bpo2").unwrap()
-    );
-    assert!(
-        Version::parse("8:1.9-0~bpo2").unwrap()
-            > Version::parse("8:1.8-0~bpo2").unwrap()
-    );
-    assert!(
-        Version::parse("8:2.8-0~bpo2").unwrap()
-            > Version::parse("8:1.8-0~bpo2").unwrap()
-    );
+    let package = cf.get_paragraphs().get(1).unwrap();
+    assert_eq!(package.get_entry("Package").unwrap(), "fbautostart");
+    assert_eq!(package.get_entry("Architecture").unwrap(), "any");
 }
 
 #[test]
@@ -204,23 +149,4 @@ fn dependency_basics() {
             }
         ))
     );
-}
-
-#[cfg(feature = "serde")]
-#[test]
-fn serde_tests() {
-    let data = r#"[
-        "8:1.8-0~bpo2",
-        "1.8-0",
-        "1:1:1-8-8"
-    ]"#;
-    let versions: Vec<Version> = serde_json::from_str(data).unwrap();
-    assert_eq!(versions.len(), 3);
-    assert_eq!(versions[0], Version::parse("8:1.8-0~bpo2").unwrap());
-    assert_eq!(versions[1], Version::parse("1.8-0").unwrap());
-    assert_eq!(versions[2], Version::parse("1:1:1-8-8").unwrap());
-
-    // test serialization
-    let ser = serde_json::to_string(&versions).unwrap();
-    assert_eq!(ser, r#"["8:1.8-0~bpo2","1.8-0","1:1:1-8-8"]"#);
 }
