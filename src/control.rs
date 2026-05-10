@@ -200,11 +200,7 @@ impl ControlFile {
                     };
 
                     // begin new entry
-                    if is_end_of_para {
-                        None
-                    } else {
-                        Some(line)
-                    }
+                    if is_end_of_para { None } else { Some(line) }
                 }
                 (Some(v), true, false) => Some(v + &line),
                 (None, _, false) => Some(line),
