@@ -37,6 +37,10 @@ fn version_comparisons() {
     let v = Version::parse("7:2.1.4-0~bpo2").unwrap();
     assert!(v < Version::parse("8:1.8-0~bpo2").unwrap());
 
+    assert!(
+        Version::parse("1.0~rc1").unwrap() < Version::parse("1.0").unwrap()
+    );
+
     assert_eq!(
         Version::parse("0:1.0").unwrap(),
         Version::parse("1.0").unwrap()
