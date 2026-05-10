@@ -40,9 +40,47 @@ impl serde::Serialize for VersionElement {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct VersionPart {
     pub elements: Vec<VersionElement>,
+}
+
+impl Ord for VersionPart {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let n = self.elements.len().max(other.elements.len());
+        for i in 0..n {
+            match (self.elements.get(i), other.elements.get(i)) {
+                (Some(a), Some(b)) => match a.cmp(b) {
+                    Ordering::Equal => {}
+                    ord => return ord,
+                },
+                // Per Debian Policy Section 5.6.12, tilde (`~`) sorts before
+                // end-of-string.
+                (Some(a), None) => {
+                    return if a.alpha.starts_with('~') {
+                        Ordering::Less
+                    } else {
+                        Ordering::Greater
+                    };
+                }
+                (None, Some(b)) => {
+                    return if b.alpha.starts_with('~') {
+                        Ordering::Greater
+                    } else {
+                        Ordering::Less
+                    };
+                }
+                (None, None) => return Ordering::Equal,
+            }
+        }
+        Ordering::Equal
+    }
+}
+
+impl PartialOrd for VersionPart {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl VersionPart {
