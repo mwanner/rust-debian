@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use log::*;
 use tempfile::TempDir;
 
-use debian::control::{parse_dep_list, ControlFile, VRel};
+use debian::control::{ControlFile, VRel, parse_dep_list};
 use debian::{Version, VersionElement, VersionPart};
 
 fn data_path() -> PathBuf {
@@ -39,17 +39,17 @@ fn control_file_foo() {
     let cf = ControlFile::from_file(&path).unwrap();
     assert!(cf.get_paragraphs().len() == 2);
 
-    let gp = cf.get_paragraphs().get(0).unwrap();
+    let gp = cf.get_paragraphs().first().unwrap();
     assert_eq!(gp.get_entry("Source").unwrap(), "foo");
 
     let bd = gp.get_entry("Build-Depends").unwrap();
     let dl = parse_dep_list(bd).unwrap();
 
-    let libbluetooth = dl.get(1).unwrap().alternatives.get(0).unwrap();
+    let libbluetooth = dl.get(1).unwrap().alternatives.first().unwrap();
     assert_eq!(libbluetooth.arch.as_ref().unwrap(), "linux-any");
     assert_eq!(libbluetooth.condition.as_ref().unwrap(), "!stage1");
 
-    let xvfb = dl.get(2).unwrap().alternatives.get(0).unwrap();
+    let xvfb = dl.get(2).unwrap().alternatives.first().unwrap();
     assert_eq!(xvfb.condition.as_ref().unwrap(), "!nocheck");
     assert_eq!(xvfb.arch, None);
 }
@@ -62,7 +62,7 @@ fn control_file_postgis() {
     let cf = ControlFile::from_file(&path).unwrap();
     assert_eq!(cf.get_paragraphs().len(), 10, "number of paragraphs");
 
-    let gp = cf.get_paragraphs().get(0).unwrap();
+    let gp = cf.get_paragraphs().first().unwrap();
     assert_eq!(gp.get_entry("Source").unwrap(), "postgis");
 }
 
@@ -74,7 +74,7 @@ fn control_file_fbautostart() {
     let cf = ControlFile::from_file(&path).unwrap();
     assert_eq!(cf.get_paragraphs().len(), 2, "number of paragraphs");
 
-    let source = cf.get_paragraphs().get(0).unwrap();
+    let source = cf.get_paragraphs().first().unwrap();
     assert_eq!(
         source.get_entry("Maintainer").unwrap(),
         "Paul Tagliamonte <paultag@ubuntu.com>"

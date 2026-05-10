@@ -171,7 +171,7 @@ impl Version {
                         return Err(ParseError {
                             pos: 0,
                             msg: "Expected a numeric epoch.".to_string(),
-                        })
+                        });
                     }
                 }
             }
@@ -234,17 +234,15 @@ impl PartialOrd for Version {
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match (self.epoch, self.debian_revision.count_elements()) {
-            (0, 0) => write!(f, "{}", &self.upstream_version),
-            (0, _) => write!(
-                f,
-                "{}-{}",
-                &self.upstream_version, &self.debian_revision
-            ),
-            (_, 0) => write!(f, "{}:{}", self.epoch, &self.upstream_version),
+            (0, 0) => write!(f, "{}", self.upstream_version),
+            (0, _) => {
+                write!(f, "{}-{}", self.upstream_version, self.debian_revision)
+            }
+            (_, 0) => write!(f, "{}:{}", self.epoch, self.upstream_version),
             (_, _) => write!(
                 f,
                 "{}:{}-{}",
-                self.epoch, &self.upstream_version, &self.debian_revision
+                self.epoch, self.upstream_version, self.debian_revision
             ),
         }
     }
