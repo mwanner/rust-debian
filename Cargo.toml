@@ -1,6 +1,6 @@
 [package]
 name = "debian"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Markus Wanner <markus@bluegap.ch>"]
 license = "MIT/Apache-2.0"
 description = """
@@ -9,8 +9,8 @@ control files for packaging, comparing versions (the Debian way) or
 interacting with apt.
 """
 repository = "https://github.com/mwanner/rust-debian"
-rust-version = "1.67.1"
-edition = "2021"
+rust-version = "1.85.1"
+edition = "2024"
 
 [dependencies]
 chrono = { version = "0.4" }
