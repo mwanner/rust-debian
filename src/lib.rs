@@ -13,6 +13,7 @@
 
 pub mod changelog;
 pub mod control;
+pub mod relation;
 pub mod version;
 
 pub use self::changelog::{Changelog, ChangelogEntry};

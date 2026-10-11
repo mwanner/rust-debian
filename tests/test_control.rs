@@ -4,7 +4,8 @@ use std::path::PathBuf;
 use log::*;
 use tempfile::TempDir;
 
-use debian::control::{ControlFile, VRel, parse_dep_list};
+use debian::control::ControlFile;
+use debian::relation::{VRel, parse_dep_list};
 use debian::{Version, VersionElement, VersionPart};
 
 fn data_path() -> PathBuf {
