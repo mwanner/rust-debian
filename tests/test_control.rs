@@ -32,12 +32,29 @@ fn setup() {
 
 #[test]
 fn control_file_foo() {
-    setup();
+    let data = concat!(
+        "Source: foo\n",
+        "Section: unknown\n",
+        "Priority: extra\n",
+        "Maintainer: Mickey Mouse <mouse@disney.com>\n",
+        "Build-Depends: debhelper (>= 9), libbluetooth-dev [linux-any] <!stage1>, xvfb <!nocheck>\n",
+        "Standards-Version: 3.9.6\n",
+        "Homepage: http://disney.com/foo\n",
+        "\n",
+        "Package: foo\n",
+        "Version: 1:1.2-3\n",
+        "Architecture: any\n",
+        "Depends: ${shlibs:Depends}, ${misc:Depends}\n",
+        "Description: Disney Foo - pseudo package\n",
+        " A fantastic package, version 0.9\n",
+        " .\n",
+        " Powered by Disney.\n",
+        "SHA256:\n",
+        " 0123abcd 42 main/binary-amd64/Packages\n",
+    );
 
-    let path = data_path().join("control-foo");
-
-    let cf = ControlFile::from_file(&path).unwrap();
-    assert!(cf.get_paragraphs().len() == 2);
+    let cf = ControlFile::from_reader(data.as_bytes()).unwrap();
+    assert_eq!(cf.get_paragraphs().len(), 2, "number of paragraphs");
 
     let gp = cf.get_paragraphs().first().unwrap();
     assert_eq!(gp.get_entry("Source").unwrap(), "foo");
@@ -52,6 +69,20 @@ fn control_file_foo() {
     let xvfb = dl.get(2).unwrap().alternatives.first().unwrap();
     assert_eq!(xvfb.condition.as_ref().unwrap(), "!nocheck");
     assert_eq!(xvfb.arch, None);
+
+    let package = cf.get_paragraphs().get(1).unwrap();
+    assert_eq!(package.get_entry("Package").unwrap(), "foo");
+    assert_eq!(package.get_entry("Version").unwrap(), "1:1.2-3");
+    assert!(
+        package
+            .get_entry("Description")
+            .unwrap()
+            .contains("Powered by Disney.")
+    );
+    assert_eq!(
+        package.get_entry("SHA256").unwrap(),
+        "0123abcd 42 main/binary-amd64/Packages"
+    );
 }
 
 #[test]

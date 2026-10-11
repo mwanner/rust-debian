@@ -158,9 +158,15 @@ impl ControlFile {
         self.paragraphs.push(p);
     }
 
+    /// Parses a control file from the given path.
     pub fn from_file(in_file: &Path) -> io::Result<ControlFile> {
         let file = File::open(in_file)?;
-        let mut buf = io::BufReader::new(file);
+        ControlFile::from_reader(io::BufReader::new(file))
+    }
+
+    /// Parses a control file from any buffered reader, e.g. an in-memory
+    /// buffer or a network stream.
+    pub fn from_reader<R: BufRead>(mut buf: R) -> io::Result<ControlFile> {
         let mut paragraphs = Vec::new();
         let mut cur_entry: Option<String> = None;
         let mut cur_para = ControlParagraph::default();
